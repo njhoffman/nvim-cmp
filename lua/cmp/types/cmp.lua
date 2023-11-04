@@ -1,43 +1,50 @@
-local cmp = {}
+local cmp =
+  {}
 
 ---@alias cmp.ConfirmBehavior 'insert' | 'replace'
-cmp.ConfirmBehavior = {
-  Insert = 'insert',
-  Replace = 'replace',
-}
+cmp.ConfirmBehavior =
+  {
+    Insert = 'insert',
+    Replace = 'replace',
+  }
 
 ---@alias cmp.SelectBehavior 'insert' | 'select'
-cmp.SelectBehavior = {
-  Insert = 'insert',
-  Select = 'select',
-}
+cmp.SelectBehavior =
+  {
+    Insert = 'insert',
+    Select = 'select',
+  }
 
 ---@alias cmp.ContextReason 'auto' | 'manual' | 'triggerOnly' | 'none'
-cmp.ContextReason = {
-  Auto = 'auto',
-  Manual = 'manual',
-  TriggerOnly = 'triggerOnly',
-  None = 'none',
-}
+cmp.ContextReason =
+  {
+    Auto = 'auto',
+    Manual = 'manual',
+    TriggerOnly = 'triggerOnly',
+    None = 'none',
+  }
 
 ---@alias cmp.TriggerEvent 'InsertEnter' | 'TextChanged'
-cmp.TriggerEvent = {
-  InsertEnter = 'InsertEnter',
-  TextChanged = 'TextChanged',
-}
+cmp.TriggerEvent =
+  {
+    InsertEnter = 'InsertEnter',
+    TextChanged = 'TextChanged',
+  }
 
 ---@alias cmp.PreselectMode 'item' | 'None'
-cmp.PreselectMode = {
-  Item = 'item',
-  None = 'none',
-}
+cmp.PreselectMode =
+  {
+    Item = 'item',
+    None = 'none',
+  }
 
 ---@alias cmp.ItemField 'abbr' | 'kind' | 'menu'
-cmp.ItemField = {
-  Abbr = 'abbr',
-  Kind = 'kind',
-  Menu = 'menu',
-}
+cmp.ItemField =
+  {
+    Abbr = 'abbr',
+    Kind = 'kind',
+    Menu = 'menu',
+  }
 
 ---@class cmp.ContextOption
 ---@field public reason cmp.ContextReason|nil
@@ -158,6 +165,7 @@ cmp.ItemField = {
 
 ---@class cmp.SourceConfig
 ---@field public name string
+---@field public enabled nil|boolean|function(ctx: cmp.Source.context): boolean
 ---@field public option table|nil
 ---@field public priority integer|nil
 ---@field public trigger_characters string[]|nil
