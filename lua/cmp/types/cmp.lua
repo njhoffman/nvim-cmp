@@ -186,9 +186,11 @@ cmp.ItemField =
 ---@field name 'custom'
 ---@field selection_order 'top_down'|'near_cursor'
 ---@field vertical_positioning 'auto'|'above'|'below'
+---@field follow_cursor boolean
 
 ---@class cmp.NativeEntriesViewConfig
 ---@field name 'native'
+---@field follow_cursor boolean
 
 ---@class cmp.WildmenuEntriesViewConfig
 ---@field name 'wildmenu'

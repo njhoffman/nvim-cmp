@@ -96,6 +96,7 @@ return function()
         name = 'custom',
         selection_order = 'top_down',
         vertical_positioning = 'below',
+        follow_cursor = false,
       },
       docs = {
         auto_open = true,
