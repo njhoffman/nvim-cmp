@@ -1,6 +1,23 @@
 local debug = {}
 
-debug.flag = false
+debug.flag = false 
+
+debug.name_max = function()
+  local name_max = 0
+  for _, src in ipairs(require('cmp.config').get().sources) do
+    name_max = math.max(name_max, #src.name)
+  end
+  return name_max
+end
+
+debug.enable = function()
+  debug.flag = true
+end
+
+debug.disable = function()
+  debug.flag = false 
+end
+
 
 ---Print log
 ---@vararg any
@@ -13,8 +30,57 @@ debug.log = function(...)
       end
       table.insert(data, v)
     end
-    print(table.concat(data, '\t'))
+    vim.dbglog(table.concat(data, ' '))
   end
 end
 
+debug.right_align = function(name, width)
+  name = name or ''
+  width = width or debug.name_max()
+  return name .. string.rep(' ', width - #tostring(name))
+end
+
+local names = {}
+debug.source_summary = function()
+  local kinds = {}
+  kinds.available = {}
+  kinds.unavailable = {}
+  kinds.installed = {}
+  kinds.invalid = {}
+  local config = require('cmp.config')
+  local cmp = require('cmp')
+  for _, s in pairs(cmp.core.sources) do
+    names[s.name] = true
+    if config.get_source_config(s.name) then
+      if s:is_available() then
+        table.insert(kinds.available, s:get_debug_name())
+      else
+        table.insert(kinds.unavailable, s:get_debug_name())
+      end
+    else
+      table.insert(kinds.installed, s:get_debug_name())
+    end
+  end
+end
+
+debug.log_retrieval = function(self, res)
+  debug.log(debug.right_align(self:get_debug_name()), 'retrieve', debug.right_align(res, 4))
+end
+
+debug.log_request = function(self, offset, completion_context)
+  local name = self:get_debug_name() 
+  local kind, char = completion_context.triggerKind, completion_context.triggerCharacter
+  debug.log(
+    debug.right_align(name),
+    'request  ',
+    debug.right_align(offset, 3),
+    kind and ' kind:' .. kind or '',
+    char and ' char:' .. char or ''
+  ) 
+end
+
+-- ---Get current all entries
+-- cmp.get_entries = cmp.sync(function()
+--   return cmp.core.view:get_entries()
+-- end)
 return debug

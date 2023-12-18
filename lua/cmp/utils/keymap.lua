@@ -1,8 +1,11 @@
 local misc = require('cmp.utils.misc')
 local buffer = require('cmp.utils.buffer')
 local api = require('cmp.utils.api')
+local hashstring = require('cmp.utils.hashstring')
 
 local keymap = {}
+
+keymap.processed = {}
 
 ---Shortcut for nvim_replace_termcodes
 ---@param keys string
@@ -113,14 +116,24 @@ keymap.equals = function(a, b)
   return keymap.normalize(a) == keymap.normalize(b)
 end
 
+keymap.check_exists = function(lhs, rhs)
+  local hash = hashstring.base32_encode(tostring(lhs) .. tostring(rhs))
+  return vim.tbl_contains(keymap.processed, hash)
+end
+
 ---Register keypress handler.
-keymap.listen = function(mode, lhs, callback)
+keymap.listen = function(mode, lhs, callback, mapping)
   lhs = keymap.normalize(keymap.to_keymap(lhs))
 
   local existing = keymap.get_map(mode, lhs)
-  if existing.desc == 'cmp.utils.keymap.set_map' then
+  if  existing and keymap.check_exists(lhs, existing.rhs) then
+    -- vim.dbglog('already exists', lhs, existing)
     return
   end
+  table.insert(
+    keymap.processed,
+    hashstring.base32_encode(tostring(lhs) .. tostring(existing.rhs))
+  )
 
   local bufnr = existing.buffer and vim.api.nvim_get_current_buf() or -1
   local fallback = keymap.fallback(bufnr, mode, existing)
@@ -257,7 +270,8 @@ keymap.set_map = function(bufnr, mode, lhs, rhs, opts)
     opts.callback = rhs
     rhs = ''
   end
-  opts.desc = 'cmp.utils.keymap.set_map'
+  table.insert(keymap.processed, hashstring.base32_encode(tostring(lhs) .. tostring(rhs)))
+  opts.desc = opts.desc or 'cmp.utils.keymap.set_map'
 
   if vim.fn.has('nvim-0.8') == 0 then
     opts.replace_keycodes = nil

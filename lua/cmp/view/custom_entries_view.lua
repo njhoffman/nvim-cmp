@@ -184,7 +184,7 @@ end
   local should_position_above =
     cant_fit_at_bottom or
     (prefers_above and not cant_fit_at_top) or
-    (prefers_auto and is_in_top_half)
+    (prefers_auto and is_in_top_half and not cant_fit_at_top)
   if should_position_above then
     self.bottom_up = true
     height = math.min(height, row - 1)

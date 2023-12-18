@@ -143,7 +143,7 @@ core.prepare = function(self)
     for mode in pairs(mapping) do
       keymap.listen(mode, keys, function(...)
         self:on_keymap(...)
-      end)
+      end, mapping)
     end
   end
 end
@@ -160,10 +160,10 @@ core.on_change = function(self, trigger_event)
   end
   self:autoindent(trigger_event, function()
     local ctx = self:get_context({ reason = types.cmp.ContextReason.Auto })
-    debug.log(('ctx: `%s`'):format(ctx.cursor_before_line))
+    local ctx_log  = ('    ctx: `%s`'):format(ctx.cursor_before_line)
     if ctx:changed(ctx.prev_context) then
       self.view:on_change()
-      debug.log('changed')
+      debug.log(ctx_log, ' (changed)')
 
       if vim.tbl_contains(config.get().completion.autocomplete or {}, trigger_event) then
         self:complete(ctx)
@@ -172,7 +172,7 @@ core.on_change = function(self, trigger_event)
         self:filter()
       end
     else
-      debug.log('unchanged')
+      debug.log(ctx_log, ' (unchanged)')
     end
   end)
 end
