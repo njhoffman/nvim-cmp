@@ -53,7 +53,6 @@ if vim.on_key then
   end, vim.api.nvim_create_namespace('cmp.plugin'))
 end
 
-
 vim.api.nvim_create_user_command('CmpStatus', function()
   require('cmp').status()
 end, { desc = 'Check status of cmp sources' })

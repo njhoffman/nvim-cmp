@@ -15,9 +15,11 @@ return function()
       return not disabled
     end,
 
+    ---@type cmp.PerformanceConfig
     performance = {
       debounce = 60,
       throttle = 30,
+      trigger_debounce = 100,
       fetching_timeout = 500,
       confirm_resolve_timeout = 80,
       async_budget = 1,

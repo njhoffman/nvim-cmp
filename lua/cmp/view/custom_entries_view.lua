@@ -161,11 +161,11 @@ custom_entries_view.open = function(self, offset, entries)
   height = height ~= 0 and height or #self.entries
   height = math.min(height, #self.entries)
 
-local delta = 0
-if not config.get().view.entries.follow_cursor then
-  local cursor_before_line = api.get_cursor_before_line()
-  delta = vim.fn.strdisplaywidth(cursor_before_line:sub(self.offset))
-end
+  local delta = 0
+  if not config.get().view.entries.follow_cursor then
+    local cursor_before_line = api.get_cursor_before_line()
+    delta = vim.fn.strdisplaywidth(cursor_before_line:sub(self.offset))
+  end
 
   local pos = api.get_screen_cursor()
   -- local cursor_before_line = api.get_cursor_before_line()
@@ -175,16 +175,16 @@ end
   local border_info = window.get_border_info({ style = completion })
   local border_offset_row = border_info.top + border_info.bottom
   local border_offset_col = border_info.left + border_info.right
+  -- TODO: if laststatus = 1 check if more than one wnidow, if showtabline = 1 check if more than one tab
 
   local prefers_above = c.view.entries.vertical_positioning == 'above'
   local prefers_auto = c.view.entries.vertical_positioning == 'auto'
   local cant_fit_at_bottom = vim.o.lines - row - border_offset_row <= math.min(DEFAULT_HEIGHT, height)
   local cant_fit_at_top = row - border_offset_row <= math.min(DEFAULT_HEIGHT, height)
   local is_in_top_half = math.floor(vim.o.lines * 0.5) > row + border_offset_row
-  local should_position_above =
-    cant_fit_at_bottom or
-    (prefers_above and not cant_fit_at_top) or
-    (prefers_auto and is_in_top_half and not cant_fit_at_top)
+  local should_position_above = cant_fit_at_bottom
+    or (prefers_above and not cant_fit_at_top)
+    or (prefers_auto and is_in_top_half and not cant_fit_at_top)
   if should_position_above then
     self.bottom_up = true
     height = math.min(height, row - 1)
@@ -195,7 +195,9 @@ end
   else
     self.bottom_up = false
   end
-  if math.floor(vim.o.columns * 0.5) <= col + border_offset_col and vim.o.columns - col - border_offset_col <= width then
+  if
+    math.floor(vim.o.columns * 0.5) <= col + border_offset_col and vim.o.columns - col - border_offset_col <= width
+  then
     width = math.min(width, vim.o.columns - 1)
     col = vim.o.columns - width - border_offset_col - 1
     if col < 0 then
@@ -227,7 +229,14 @@ end
     border = completion.border,
     zindex = completion.zindex or 1001,
   })
-  -- always set cursor when starting. It will be adjusted on the call to _select
+
+  -- Don't set the cursor if the entries_win:open function fails
+  -- due to the window's width or height being less than 1
+  if self.entries_win.win == nil then
+    return
+  end
+
+  -- Always set cursor when starting. It will be adjusted on the call to _select
   vim.api.nvim_win_set_cursor(self.entries_win.win, { 1, 0 })
   if preselect_index > 0 and c.preselect == types.cmp.PreselectMode.Item then
     self:_select(preselect_index, { behavior = types.cmp.SelectBehavior.Select, active = false })
@@ -453,7 +462,11 @@ custom_entries_view._insert = setmetatable({
         vim.fn.setcmdline(before_line .. word .. after_line, pos)
         vim.api.nvim_feedkeys(keymap.t('<Cmd>redraw<CR>'), 'ni', false)
       else
-        vim.api.nvim_feedkeys(keymap.backspace(string.sub(api.get_current_line(), self.offset, cursor[2])) .. word, 'int', true)
+        vim.api.nvim_feedkeys(
+          keymap.backspace(string.sub(api.get_current_line(), self.offset, cursor[2])) .. word,
+          'int',
+          true
+        )
       end
     else
       if this.pending then

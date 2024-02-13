@@ -24,6 +24,31 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
+-- local debounce = function(cmp)
+--   if timer and timer:is_active() then
+--     timer:stop()
+--     timer:start(
+--       DEBOUNCE_DELAY,
+--       0,
+--       vim.schedule_wrap(function()
+--         cmp.complete({ reason = cmp.ContextReason.Auto })
+--       end)
+--     )
+--   end
+-- end
+local timer_id
+async.debounce = function(func, delay)
+  return function(...)
+    if timer_id then
+      vim.fn.timer_stop(timer_id)
+    end
+    local args = { ... }
+    timer_id = vim.fn.timer_start(delay, function()
+      vim.schedule_wrap(func(unpack(args)))
+    end)
+  end
+end
+
 ---@param fn function
 ---@param timeout integer
 ---@return cmp.AsyncThrottle

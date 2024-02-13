@@ -8,9 +8,11 @@ local keymap = {}
 ---@param keys string
 ---@return string
 keymap.t = function(keys)
-  return (string.gsub(keys, '(<[A-Za-z0-9\\%-%[%]%^@]->)', function(match)
-    return vim.api.nvim_eval(string.format([["\%s"]], match))
-  end))
+  return (
+    string.gsub(keys, '(<[A-Za-z0-9\\%-%[%]%^@]->)', function(match)
+      return vim.api.nvim_eval(string.format([["\%s"]], match))
+    end)
+  )
 end
 
 ---Normalize key sequence.

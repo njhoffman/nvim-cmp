@@ -133,7 +133,7 @@ end
 ---Update
 window.update = function(self)
   local info = self:info()
-  if info.scrollable then
+  if info.scrollable and self.style.height > 0 then
     -- Draw the background of the scrollbar
 
     if not info.border_info.visible then
@@ -157,7 +157,8 @@ window.update = function(self)
 
     -- Draw the scrollbar thumb
     local thumb_height = math.floor(info.inner_height * (info.inner_height / self:get_content_height()) + 0.5)
-    local thumb_offset = math.floor(info.inner_height * (vim.fn.getwininfo(self.win)[1].topline / self:get_content_height()))
+    local thumb_offset =
+      math.floor(info.inner_height * (vim.fn.getwininfo(self.win)[1].topline / self:get_content_height()))
 
     local style = {
       relative = 'editor',
@@ -295,7 +296,12 @@ window.get_border_info = function(self)
   info.left = new_border[8] == '' and 0 or 1
   info.vert = info.top + info.bottom
   info.horiz = info.left + info.right
-  info.visible = not (vim.tbl_contains({ '', ' ' }, new_border[2]) and vim.tbl_contains({ '', ' ' }, new_border[4]) and vim.tbl_contains({ '', ' ' }, new_border[6]) and vim.tbl_contains({ '', ' ' }, new_border[8]))
+  info.visible = not (
+    vim.tbl_contains({ '', ' ' }, new_border[2])
+    and vim.tbl_contains({ '', ' ' }, new_border[4])
+    and vim.tbl_contains({ '', ' ' }, new_border[6])
+    and vim.tbl_contains({ '', ' ' }, new_border[8])
+  )
   return info
 end
 

@@ -1,11 +1,10 @@
 local core = require('cmp.core')
 local source = require('cmp.source')
+local autocmds = require('cmp.autocmds')
 local config = require('cmp.config')
 local feedkeys = require('cmp.utils.feedkeys')
-local autocmd = require('cmp.utils.autocmd')
 local keymap = require('cmp.utils.keymap')
 local misc = require('cmp.utils.misc')
-local async = require('cmp.utils.async')
 
 local cmp = {}
 
@@ -317,57 +316,8 @@ cmp.setup = setmetatable({
 }, {
   __call = function(self, c)
     self.global(c)
+    autocmds.setup(cmp)
   end,
 })
-
--- In InsertEnter autocmd, vim will detects mode=normal unexpectedly.
-local on_insert_enter = function()
-  if config.enabled() then
-    cmp.config.compare.scopes:update()
-    cmp.config.compare.locality:update()
-    cmp.core:prepare()
-    cmp.core:on_change('InsertEnter')
-  end
-end
-autocmd.subscribe({ 'CmdlineEnter' }, async.debounce_next_tick(on_insert_enter))
-autocmd.subscribe({ 'InsertEnter' }, async.debounce_next_tick_by_keymap(on_insert_enter))
-
--- async.throttle is needed for performance. The mapping `:<C-u>...<CR>` will fire `CmdlineChanged` for each character.
-local on_text_changed = function()
-  if config.enabled() then
-    cmp.core:on_change('TextChanged')
-  end
-end
-autocmd.subscribe({ 'TextChangedI', 'TextChangedP' }, on_text_changed)
-autocmd.subscribe('CmdlineChanged', async.debounce_next_tick(on_text_changed))
-
-autocmd.subscribe('CursorMovedI', function()
-  if config.enabled() then
-    cmp.core:on_moved()
-  else
-    cmp.core:reset()
-    cmp.core.view:close()
-  end
-end)
-
--- If make this asynchronous, the completion menu will not close when the command output is displayed.
-autocmd.subscribe({ 'InsertLeave', 'CmdlineLeave' }, function()
-  cmp.core:reset()
-  cmp.core.view:close()
-end)
-
-cmp.event:on('complete_done', function(evt)
-  if evt.entry then
-    cmp.config.compare.recently_used:add_entry(evt.entry)
-  end
-  cmp.config.compare.scopes:update()
-  cmp.config.compare.locality:update()
-end)
-
-cmp.event:on('confirm_done', function(evt)
-  if evt.entry then
-    cmp.config.compare.recently_used:add_entry(evt.entry)
-  end
-end)
 
 return cmp
