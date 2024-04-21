@@ -11,7 +11,7 @@ local compare = {}
 
 ---@class cmp.ComparatorFunctor
 ---@overload fun(entry1: cmp.Entry, entry2: cmp.Entry): boolean | nil
----@alias cmp.ComparatorFunction fun(entry1: cmp.Entry, entry2: cmp.Entry): boolean | nil
+---@alias cmp.ComparatorFunction fun(entry1: cmp.Entry, entry2: cmp.Entry, entries?: cmp.Entry[]): boolean | nil
 ---@alias cmp.Comparator cmp.ComparatorFunction | cmp.ComparatorFunctor
 
 ---offset: Entries with smaller offset will be ranked higher.
@@ -238,7 +238,8 @@ compare.scopes = setmetatable({
         for _, definition in pairs(definitions) do
           if s <= definition.node:start() and definition.node:end_() <= e then
             if scope:id() == locals.containing_scope(definition.node, buf):id() then
-              local get_node_text = vim.treesitter.get_node_text or vim.treesitter.query.get_node_text
+              local get_node_text = vim.treesitter.get_node_text
+                or vim.treesitter.query.get_node_text
               local text = get_node_text(definition.node, buf) or ''
               if not self.scopes_map[text] then
                 self.scopes_map[text] = depth

@@ -65,7 +65,7 @@ view.open = function(self, ctx, sources)
     return a ~= b and (a < b) or nil
   end)
 
-  local entries = {}
+  local group_entries = {}
   for _, group_index in ipairs(group_indexes) do
     local source_group = source_group_map[group_index] or {}
 
@@ -86,11 +86,12 @@ view.open = function(self, ctx, sources)
       if s.offset <= ctx.cursor.col then
         if not has_triggered_by_symbol_source or s.is_triggered_by_symbol then
           -- source order priority bonus.
-          local priority = s:get_source_config().priority or ((#source_group - (i - 1)) * config.get().sorting.priority_weight)
+          local priority = s:get_source_config().priority
+            or ((#source_group - (i - 1)) * config.get().sorting.priority_weight)
 
           for _, e in ipairs(s:get_entries(ctx)) do
             e.score = e.score + priority
-            table.insert(entries, e)
+            table.insert(group_entries, e)
             offset = math.min(offset, e:get_offset())
           end
         end
@@ -99,20 +100,20 @@ view.open = function(self, ctx, sources)
 
     -- sort.
     local comparetors = config.get().sorting.comparators
-    table.sort(entries, function(e1, e2)
+    table.sort(group_entries, function(e1, e2)
       for _, fn in ipairs(comparetors) do
-        local diff = fn(e1, e2)
+        local diff = fn(e1, e2, group_entries)
         if diff ~= nil then
           return diff
         end
       end
     end)
     local max_item_count = config.get().performance.max_view_entries or 200
-    entries = vim.list_slice(entries, 1, max_item_count)
+    group_entries = vim.list_slice(group_entries, 1, max_item_count)
 
     -- open
-    if #entries > 0 then
-      self:_get_entries_view():open(offset, entries)
+    if #group_entries > 0 then
+      self:_get_entries_view():open(offset, group_entries)
       self.event:emit('menu_opened', {
         window = self:_get_entries_view(),
       })
@@ -121,10 +122,10 @@ view.open = function(self, ctx, sources)
   end
 
   -- complete_done.
-  if #entries == 0 then
+  if #group_entries == 0 then
     self:close()
   end
-  return #entries > 0
+  return #group_entries > 0
 end
 
 ---Close menu
