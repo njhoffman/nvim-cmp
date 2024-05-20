@@ -48,17 +48,11 @@ debug.right_align = function(name, width)
   return name .. string.rep(' ', width - #tostring(name))
 end
 
-local names = {}
 debug.source_summary = function()
-  local kinds = {}
-  kinds.available = {}
-  kinds.unavailable = {}
-  kinds.installed = {}
-  kinds.invalid = {}
+  local kinds = { available = {}, unavailable = {}, installed = {}, invalid = {} }
   local config = require('cmp.config')
   local cmp = require('cmp')
   for _, s in pairs(cmp.core.sources) do
-    names[s.name] = true
     if config.get_source_config(s.name) then
       if s:is_available() then
         table.insert(kinds.available, s:get_debug_name())
@@ -69,6 +63,7 @@ debug.source_summary = function()
       table.insert(kinds.installed, s:get_debug_name())
     end
   end
+  return kinds
 end
 
 debug.log_retrieval = function(self, res)
@@ -87,7 +82,7 @@ debug.log_request = function(self, offset, completion_context)
       debug.right_align(offset, 3),
       kind and ' kind:' .. kind or '',
       char and ' char:' .. char or ''
-      )
+    )
   end
 end
 
