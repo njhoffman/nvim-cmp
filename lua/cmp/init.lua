@@ -119,7 +119,7 @@ cmp.abort = cmp.sync(function()
   if cmp.core.view:visible() then
     local release = cmp.core:suspend()
     cmp.core.view:abort()
-    vim.schedule(release)
+    cmp.core:reset()
     return true
   else
     return false
@@ -209,7 +209,9 @@ end)
 cmp.confirm = cmp.sync(function(option, callback)
   option = option or {}
   option.select = option.select or false
-  option.behavior = option.behavior or cmp.get_config().confirmation.default_behavior or cmp.ConfirmBehavior.Insert
+  option.behavior = option.behavior
+    or cmp.get_config().confirmation.default_behavior
+    or cmp.ConfirmBehavior.Insert
   callback = callback or function() end
 
   if cmp.core.view:visible() then
