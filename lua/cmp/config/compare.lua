@@ -212,7 +212,9 @@ compare.scopes = setmetatable({
 
       -- Cursor scope.
       local cursor_scope = nil
-      for _, scope in ipairs(locals.get_scopes(buf)) do
+      -- Prioritize the older get_scopes method from nvim-treesitter `master` over get from `main`
+      local scopes = locals.get_scopes and locals.get_scopes(buf) or select(3, locals.get(buf))
+      for _, scope in ipairs(scopes) do
         if scope:start() <= cursor_row and cursor_row <= scope:end_() then
           if not cursor_scope then
             cursor_scope = scope
@@ -238,8 +240,7 @@ compare.scopes = setmetatable({
         for _, definition in pairs(definitions) do
           if s <= definition.node:start() and definition.node:end_() <= e then
             if scope:id() == locals.containing_scope(definition.node, buf):id() then
-              local get_node_text = vim.treesitter.get_node_text
-                or vim.treesitter.query.get_node_text
+              local get_node_text = vim.treesitter.get_node_text or vim.treesitter.query.get_node_text
               local text = get_node_text(definition.node, buf) or ''
               if not self.scopes_map[text] then
                 self.scopes_map[text] = depth
