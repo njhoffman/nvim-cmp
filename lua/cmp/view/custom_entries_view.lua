@@ -82,19 +82,13 @@ custom_entries_view.new = function()
           end
 
           for _, m in ipairs(e.matches or {}) do
-            vim.api.nvim_buf_set_extmark(
-              buf,
-              custom_entries_view.ns,
-              i,
-              a + m.word_match_start - 1,
-              {
-                end_line = i,
-                end_col = a + m.word_match_end,
-                hl_group = m.fuzzy and 'CmpItemAbbrMatchFuzzy' or 'CmpItemAbbrMatch',
-                hl_mode = 'combine',
-                ephemeral = true,
-              }
-            )
+            vim.api.nvim_buf_set_extmark(buf, custom_entries_view.ns, i, a + m.word_match_start - 1, {
+              end_line = i,
+              end_col = a + m.word_match_end,
+              hl_group = m.fuzzy and 'CmpItemAbbrMatchFuzzy' or 'CmpItemAbbrMatch',
+              hl_mode = 'combine',
+              ephemeral = true,
+            })
           end
         end
       end
@@ -187,13 +181,10 @@ custom_entries_view.open = function(self, offset, entries)
 
   local prefers_above = c.view.entries.vertical_positioning == 'above'
   local prefers_auto = c.view.entries.vertical_positioning == 'auto'
-  local cant_fit_at_bottom = vim.o.lines - row - border_offset_row
-    <= math.min(DEFAULT_HEIGHT, height)
+  local cant_fit_at_bottom = vim.o.lines - row - border_offset_row <= math.min(DEFAULT_HEIGHT, height)
   local cant_fit_at_top = row - border_offset_row <= math.min(DEFAULT_HEIGHT, height)
   local is_in_top_half = math.floor(vim.o.lines * 0.5) > row + border_offset_row
-  local should_position_above = cant_fit_at_bottom
-    or (prefers_above and not cant_fit_at_top)
-    or (prefers_auto and is_in_top_half and not cant_fit_at_top)
+  local should_position_above = cant_fit_at_bottom or (prefers_above and not cant_fit_at_top) or (prefers_auto and is_in_top_half and not cant_fit_at_top)
   if should_position_above then
     self.bottom_up = true
     height = math.min(height, row - 1)
@@ -204,10 +195,7 @@ custom_entries_view.open = function(self, offset, entries)
   else
     self.bottom_up = false
   end
-  if
-    math.floor(vim.o.columns * 0.5) <= col + border_offset_col
-    and vim.o.columns - col - border_offset_col <= width
-  then
+  if math.floor(vim.o.columns * 0.5) <= col + border_offset_col and vim.o.columns - col - border_offset_col <= width then
     width = math.min(width, vim.o.columns - 1)
     col = vim.o.columns - width - border_offset_col - 1
     if col < 0 then
@@ -260,10 +248,7 @@ custom_entries_view.open = function(self, offset, entries)
     if self:is_direction_top_down() then
       self:_select(0, { behavior = types.cmp.SelectBehavior.Select, active = false })
     else
-      self:_select(
-        #self.entries + 1,
-        { behavior = types.cmp.SelectBehavior.Select, active = false }
-      )
+      self:_select(#self.entries + 1, { behavior = types.cmp.SelectBehavior.Select, active = false })
     end
   end
 end
@@ -331,9 +316,15 @@ custom_entries_view.info = function(self)
   return self.entries_win:info()
 end
 
+custom_entries_view.get_selected_index = function(self)
+  if self:visible() and self.entries_win:option('cursorline') then
+    return vim.api.nvim_win_get_cursor(self.entries_win.win)[1]
+  end
+end
+
 custom_entries_view.select_next_item = function(self, option)
   if self:visible() then
-    local cursor = vim.api.nvim_win_get_cursor(self.entries_win.win)[1]
+    local cursor = self:get_selected_index()
     local is_top_down = self:is_direction_top_down() or option.preserve_mapping_verticality
     local last = #self.entries
 
@@ -370,7 +361,7 @@ end
 
 custom_entries_view.select_prev_item = function(self, option)
   if self:visible() then
-    local cursor = vim.api.nvim_win_get_cursor(self.entries_win.win)[1]
+    local cursor = self:get_selected_index()
     local is_top_down = self:is_direction_top_down() or option.preserve_mapping_verticality
     local last = #self.entries
 
@@ -427,7 +418,7 @@ end
 
 custom_entries_view.get_selected_entry = function(self)
   if self:visible() and self.entries_win:option('cursorline') then
-    return self.entries[vim.api.nvim_win_get_cursor(self.entries_win.win)[1]]
+    return self.entries[self:get_selected_index()]
   end
 end
 
@@ -438,8 +429,7 @@ custom_entries_view.get_active_entry = function(self)
 end
 
 custom_entries_view._select = function(self, cursor, option)
-  local is_insert = (option.behavior or types.cmp.SelectBehavior.Insert)
-    == types.cmp.SelectBehavior.Insert
+  local is_insert = (option.behavior or types.cmp.SelectBehavior.Insert) == types.cmp.SelectBehavior.Insert
   if is_insert and not self.active then
     self.prefix = string.sub(api.get_current_line(), self.offset, api.get_cursor()[2]) or ''
   end
@@ -452,9 +442,7 @@ custom_entries_view._select = function(self, cursor, option)
   })
 
   if is_insert then
-    self:_insert(
-      self.entries[cursor] and self.entries[cursor]:get_vim_item(self.offset).word or self.prefix
-    )
+    self:_insert(self.entries[cursor] and self.entries[cursor]:get_vim_item(self.offset).word or self.prefix)
   end
 
   self.entries_win:update()
@@ -478,11 +466,7 @@ custom_entries_view._insert = setmetatable({
         vim.fn.setcmdline(before_line .. word .. after_line, pos)
         vim.api.nvim_feedkeys(keymap.t('<Cmd>redraw<CR>'), 'ni', false)
       else
-        vim.api.nvim_feedkeys(
-          keymap.backspace(string.sub(api.get_current_line(), self.offset, cursor[2])) .. word,
-          'int',
-          true
-        )
+        vim.api.nvim_feedkeys(keymap.backspace(string.sub(api.get_current_line(), self.offset, cursor[2])) .. word, 'int', true)
       end
     else
       if this.pending then
@@ -495,10 +479,7 @@ custom_entries_view._insert = setmetatable({
         local cursor = api.get_cursor()
         local keys = {}
         table.insert(keys, keymap.indentkeys())
-        table.insert(
-          keys,
-          keymap.backspace(string.sub(api.get_current_line(), self.offset, cursor[2]))
-        )
+        table.insert(keys, keymap.backspace(string.sub(api.get_current_line(), self.offset, cursor[2])))
         table.insert(keys, word)
         table.insert(keys, keymap.indentkeys(vim.bo.indentkeys))
         feedkeys.call(

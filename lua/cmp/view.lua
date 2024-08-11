@@ -65,7 +65,7 @@ view.open = function(self, ctx, sources)
     return a ~= b and (a < b) or nil
   end)
 
-  local group_entries = {}
+  local entries = {}
   for _, group_index in ipairs(group_indexes) do
     local source_group = source_group_map[group_index] or {}
 
@@ -82,12 +82,19 @@ view.open = function(self, ctx, sources)
 
     -- create filtered entries.
     local offset = ctx.cursor.col
+    local group_entries = {}
+    local max_item_counts = {}
     for i, s in ipairs(source_group) do
       if s.offset <= ctx.cursor.col then
         if not has_triggered_by_symbol_source or s.is_triggered_by_symbol then
+          -- prepare max_item_counts map for filtering after sort.
+          local max_item_count = s:get_source_config().max_item_count
+          if max_item_count ~= nil then
+            max_item_counts[s.name] = max_item_count
+          end
+
           -- source order priority bonus.
-          local priority = s:get_source_config().priority
-            or ((#source_group - (i - 1)) * config.get().sorting.priority_weight)
+          local priority = s:get_source_config().priority or ((#source_group - (i - 1)) * config.get().sorting.priority_weight)
 
           for _, e in ipairs(s:get_entries(ctx)) do
             e.score = e.score + priority
@@ -102,18 +109,31 @@ view.open = function(self, ctx, sources)
     local comparetors = config.get().sorting.comparators
     table.sort(group_entries, function(e1, e2)
       for _, fn in ipairs(comparetors) do
-        local diff = fn(e1, e2, group_entries)
+        local diff = fn(e1, e2)
         if diff ~= nil then
           return diff
         end
       end
     end)
-    local max_item_count = config.get().performance.max_view_entries or 200
-    group_entries = vim.list_slice(group_entries, 1, max_item_count)
+
+    -- filter by max_item_count.
+    for _, e in ipairs(group_entries) do
+      if max_item_counts[e.source.name] ~= nil then
+        if max_item_counts[e.source.name] > 0 then
+          max_item_counts[e.source.name] = max_item_counts[e.source.name] - 1
+          table.insert(entries, e)
+        end
+      else
+        table.insert(entries, e)
+      end
+    end
+
+    local max_view_entries = config.get().performance.max_view_entries or 200
+    entries = vim.list_slice(entries, 1, max_view_entries)
 
     -- open
-    if #group_entries > 0 then
-      self:_get_entries_view():open(offset, group_entries)
+    if #entries > 0 then
+      self:_get_entries_view():open(offset, entries)
       self.event:emit('menu_opened', {
         window = self:_get_entries_view(),
       })
@@ -122,10 +142,10 @@ view.open = function(self, ctx, sources)
   end
 
   -- complete_done.
-  if #group_entries == 0 then
+  if #entries == 0 then
     self:close()
   end
-  return #group_entries > 0
+  return #entries > 0
 end
 
 ---Close menu
@@ -190,6 +210,13 @@ end
 ---@param delta integer
 view.scroll_docs = function(self, delta)
   self.docs_view:scroll(delta)
+end
+
+---Get what number candidates are currently selected.
+---If not selected, nil is returned.
+---@return integer|nil
+view.get_selected_index = function(self)
+  return self:_get_entries_view():get_selected_index()
 end
 
 ---Select prev menu item.

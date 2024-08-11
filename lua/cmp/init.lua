@@ -87,6 +87,12 @@ cmp.visible = cmp.sync(function()
   return cmp.core.view:visible() or vim.fn.pumvisible() == 1
 end)
 
+---Get what number candidates are currently selected.
+---If not selected, nil is returned.
+cmp.get_selected_index = cmp.sync(function()
+  return cmp.core.view:get_selected_index()
+end)
+
 ---Get current selected entry or nil
 cmp.get_selected_entry = cmp.sync(function()
   return cmp.core.view:get_selected_entry()
@@ -209,9 +215,7 @@ end)
 cmp.confirm = cmp.sync(function(option, callback)
   option = option or {}
   option.select = option.select or false
-  option.behavior = option.behavior
-    or cmp.get_config().confirmation.default_behavior
-    or cmp.ConfirmBehavior.Insert
+  option.behavior = option.behavior or cmp.get_config().confirmation.default_behavior or cmp.ConfirmBehavior.Insert
   callback = callback or function() end
 
   if cmp.core.view:visible() then

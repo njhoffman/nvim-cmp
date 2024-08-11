@@ -1,7 +1,6 @@
 local config = require('cmp.config')
 local misc = require('cmp.utils.misc')
 local snippet = require('cmp.utils.snippet')
-local str = require('cmp.utils.str')
 local api = require('cmp.utils.api')
 local types = require('cmp.types')
 
@@ -11,17 +10,15 @@ local ghost_text_view = {}
 ghost_text_view.ns = vim.api.nvim_create_namespace('cmp:GHOST_TEXT')
 
 local has_inline = (function()
-  return (
-    pcall(function()
-      local id = vim.api.nvim_buf_set_extmark(0, ghost_text_view.ns, 0, 0, {
-        virt_text = { { ' ', 'Comment' } },
-        virt_text_pos = 'inline',
-        hl_mode = 'combine',
-        ephemeral = false,
-      })
-      vim.api.nvim_buf_del_extmark(0, ghost_text_view.ns, id)
-    end)
-  )
+  return (pcall(function()
+    local id = vim.api.nvim_buf_set_extmark(0, ghost_text_view.ns, 0, 0, {
+      virt_text = { { ' ', 'Comment' } },
+      virt_text_pos = 'inline',
+      hl_mode = 'combine',
+      ephemeral = false,
+    })
+    vim.api.nvim_buf_del_extmark(0, ghost_text_view.ns, id)
+  end))
 end)()
 
 ghost_text_view.new = function()
@@ -65,15 +62,14 @@ ghost_text_view.new = function()
         end
         local first_line = table.remove(virt_lines, 1)
         self.extmark_buf = vim.api.nvim_get_current_buf()
-        self.extmark_id =
-          vim.api.nvim_buf_set_extmark(self.extmark_buf, ghost_text_view.ns, row - 1, col, {
-            right_gravity = true,
-            virt_text = first_line,
-            virt_text_pos = has_inline and 'inline' or 'overlay',
-            virt_lines = virt_lines,
-            hl_mode = 'combine',
-            ephemeral = false,
-          })
+        self.extmark_id = vim.api.nvim_buf_set_extmark(self.extmark_buf, ghost_text_view.ns, row - 1, col, {
+          right_gravity = true,
+          virt_text = first_line,
+          virt_text_pos = has_inline and 'inline' or 'overlay',
+          virt_lines = virt_lines,
+          hl_mode = 'combine',
+          ephemeral = false,
+        })
       end
     end,
   })
