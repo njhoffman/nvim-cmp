@@ -157,8 +157,7 @@ window.update = function(self)
 
     -- Draw the scrollbar thumb
     local thumb_height = math.floor(info.inner_height * (info.inner_height / self:get_content_height()) + 0.5)
-    local thumb_offset =
-      math.floor(info.inner_height * (vim.fn.getwininfo(self.win)[1].topline / self:get_content_height()))
+    local thumb_offset = math.floor(info.inner_height * (vim.fn.getwininfo(self.win)[1].topline / self:get_content_height()))
 
     local style = {
       relative = 'editor',
@@ -296,12 +295,7 @@ window.get_border_info = function(self)
   info.left = new_border[8] == '' and 0 or 1
   info.vert = info.top + info.bottom
   info.horiz = info.left + info.right
-  info.visible = not (
-    vim.tbl_contains({ '', ' ' }, new_border[2])
-    and vim.tbl_contains({ '', ' ' }, new_border[4])
-    and vim.tbl_contains({ '', ' ' }, new_border[6])
-    and vim.tbl_contains({ '', ' ' }, new_border[8])
-  )
+  info.visible = not (vim.tbl_contains({ '', ' ' }, new_border[2]) and vim.tbl_contains({ '', ' ' }, new_border[4]) and vim.tbl_contains({ '', ' ' }, new_border[6]) and vim.tbl_contains({ '', ' ' }, new_border[8]))
   return info
 end
 
@@ -315,6 +309,10 @@ window.get_content_height = function(self)
   local height = 0
   vim.api.nvim_buf_call(self:get_buffer(), function()
     for _, text in ipairs(vim.api.nvim_buf_get_lines(self:get_buffer(), 0, -1, false)) do
+      -- nvim_buf_get_lines sometimes returns a blob. see #2050
+      if vim.fn.type(text) == vim.v.t_blob then
+        text = vim.fn.string(text)
+      end
       height = height + math.max(1, math.ceil(vim.fn.strdisplaywidth(text) / self.style.width))
     end
   end)

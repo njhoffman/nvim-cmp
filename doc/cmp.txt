@@ -250,7 +250,7 @@ NOTE: `<Cmd>lua require('cmp').complete()<CR>` can be used to call these functio
   `behavior=cmp.ConfirmBehavior.Insert`: inserts the selected item and
     moves adjacent text to the right (default).
   `behavior=cmp.ConfirmBehavior.Replace`: replaces adjacent text with
-    the selected item.    
+    the selected item.
 >lua
   cmp.setup {
     mapping = {
@@ -448,6 +448,12 @@ performance.fetching_timeout~
     `number`
     Sets the timeout of candidate fetching process.
     The nvim-cmp will wait to display the most prioritized source.
+
+                                      *cmp-config.performance.filtering_context_budget*
+performance.filtering_context_budget~
+    `number`
+    Sets the filtering context budget in ms.
+    If filtering takes longer than this, it will be deferred.
 
                                         *cmp-config.performance.confirm_resolve_timeout*
 performance.confirm_resolve_timeout~

@@ -21,6 +21,7 @@ return function()
       throttle = 30,
       trigger_debounce = 100,
       fetching_timeout = 500,
+      filtering_context_budget = 3,
       confirm_resolve_timeout = 80,
       async_budget = 1,
       max_view_entries = 200,
