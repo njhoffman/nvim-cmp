@@ -81,6 +81,7 @@ view.open = function(self, ctx, sources)
     end
 
     -- create filtered entries.
+    local max_view_entries = config.get().performance.max_view_entries or 200
     local offset = ctx.cursor.col
     local group_entries = {}
     local max_item_counts = {}
@@ -98,6 +99,9 @@ view.open = function(self, ctx, sources)
 
           for _, e in ipairs(s:get_entries(ctx)) do
             e.score = e.score + priority
+            local es =s:get_entries(ctx)
+            for index, e in ipairs(es) do
+              e.score = (e.score + priority) * max_view_entries + #es - index
             table.insert(group_entries, e)
             offset = math.min(offset, e.offset)
           end
@@ -128,7 +132,6 @@ view.open = function(self, ctx, sources)
       end
     end
 
-    local max_view_entries = config.get().performance.max_view_entries or 200
     entries = vim.list_slice(entries, 1, max_view_entries)
 
     -- open
