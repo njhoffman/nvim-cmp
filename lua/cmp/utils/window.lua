@@ -160,7 +160,6 @@ window.update = function(self)
     thumb_height = math.max(1, thumb_height)
     local topline = vim.fn.getwininfo(self.win)[1].topline
     local scroll_ratio = topline / (self:get_content_height() - info.inner_height + 1)
-
     -- row grid start from 0 on nvim-0.10
     local thumb_offset_raw = (info.inner_height - thumb_height) * scroll_ratio
     -- round half if topline > 1

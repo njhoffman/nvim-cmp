@@ -76,13 +76,7 @@ debug.log_request = function(self, offset, completion_context)
   if debug.flag == true then
     local name = self:get_debug_name()
     local kind, char = completion_context.triggerKind, completion_context.triggerCharacter
-    debug.log(
-      debug.right_align(name),
-      'request  ',
-      debug.right_align(offset, 3),
-      kind and ' kind:' .. kind or '',
-      char and ' char:' .. char or ''
-    )
+    debug.log(debug.right_align(name), 'request  ', debug.right_align(offset, 3), kind and ' kind:' .. kind or '', char and ' char:' .. char or '')
   end
 end
 
