@@ -53,6 +53,12 @@ end
 cmp.register_source = function(name, s)
   local src = source.new(name, s)
   cmp.core:register_source(src)
+  vim.api.nvim_exec_autocmds('User', {
+    pattern = 'CmpRegisterSource',
+    data = {
+      source_id = src.id,
+    },
+  })
   return src.id
 end
 
@@ -60,6 +66,21 @@ end
 ---@param id integer
 cmp.unregister_source = function(id)
   cmp.core:unregister_source(id)
+  local s = cmp.core:unregister_source(id)
+  if s then
+    vim.api.nvim_exec_autocmds('User', {
+      pattern = 'CmpUnregisterSource',
+      data = {
+        source_id = id,
+      },
+    })
+  end
+end
+
+---Get registered sources.
+---@return cmp.Source[]
+cmp.get_registered_sources = function()
+  return cmp.core:get_registered_sources()
 end
 
 ---Get current configuration.
@@ -126,6 +147,7 @@ cmp.abort = cmp.sync(function()
     local release = cmp.core:suspend()
     cmp.core.view:abort()
     cmp.core:reset()
+    vim.schedule(release)
     return true
   else
     return false

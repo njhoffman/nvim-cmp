@@ -97,22 +97,20 @@ view.open = function(self, ctx, sources)
           -- source order priority bonus.
           local priority = s:get_source_config().priority or ((#source_group - (i - 1)) * config.get().sorting.priority_weight)
 
-          for _, e in ipairs(s:get_entries(ctx)) do
-            e.score = e.score + priority
-            local es =s:get_entries(ctx)
-            for index, e in ipairs(es) do
-              e.score = (e.score + priority) * max_view_entries + #es - index
+          local es = s:get_entries(ctx)
+          for index, e in ipairs(es) do
+            e.score = (e.score + priority) * max_view_entries + #es - index
             table.insert(group_entries, e)
-            offset = math.min(offset, e.offset)
+            offset = math.min(offset, e:get_offset())
           end
         end
       end
     end
 
     -- sort.
-    local comparetors = config.get().sorting.comparators
+    local comparators = config.get().sorting.comparators
     table.sort(group_entries, function(e1, e2)
-      for _, fn in ipairs(comparetors) do
+      for _, fn in ipairs(comparators) do
         local diff = fn(e1, e2)
         if diff ~= nil then
           return diff
