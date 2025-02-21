@@ -65,8 +65,7 @@ lsp.Position = {
       return position
     end
 
-    local ok, byteindex = pcall(vim.str_byteindex,
-      text, position.character, from_encoding == lsp.PositionEncodingKind.UTF16)
+    local ok, byteindex = pcall(vim.str_byteindex, text, position.character, from_encoding == lsp.PositionEncodingKind.UTF16)
     if not ok then
       return position
     end
@@ -201,9 +200,8 @@ lsp.CompletionItemKind = {
   Operator = 24,
   TypeParameter = 25,
 }
-for name, num in pairs(lsp.CompletionItemKind) do
-  lsp.CompletionItemKind[num] = name
-end
+
+lsp.CompletionItemKind = vim.tbl_add_reverse_lookup(lsp.CompletionItemKind)
 
 ---@class lsp.internal.CompletionItemDefaults
 ---@field public commitCharacters? string[]
