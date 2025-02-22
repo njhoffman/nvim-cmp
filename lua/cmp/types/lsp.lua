@@ -201,7 +201,7 @@ lsp.CompletionItemKind = {
   TypeParameter = 25,
 }
 
-lsp.CompletionItemKind = vim.tbl_add_reverse_lookup(lsp.CompletionItemKind)
+lsp.CompletionItemKind = misc.tbl_add_reverse_lookup(lsp.CompletionItemKind)
 
 ---@class lsp.internal.CompletionItemDefaults
 ---@field public commitCharacters? string[]
