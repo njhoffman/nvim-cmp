@@ -357,6 +357,7 @@ entry._get_vim_item = function(self, suggest_offset)
     menu = menu,
     dup = completion_item.dup or 1,
   }
+
   if config.get().formatting.format then
     vim_item = config.get().formatting.format(self, vim_item)
   end

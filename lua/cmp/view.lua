@@ -188,6 +188,7 @@ end
 view.open_docs = function(self)
   self.is_docs_view_pinned = true
   local e = self:get_selected_entry()
+
   if e then
     e:resolve(vim.schedule_wrap(self.resolve_dedup(function()
       if not self:visible() then
