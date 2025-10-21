@@ -123,9 +123,10 @@ A recommended configuration can be found below.
 
     local capabilities = require('cmp_nvim_lsp').default_capabilities()
     -- Setup lspconfig.
-    require('lspconfig')[%YOUR_LSP_SERVER%].setup {
+    vim.lsp.config(%YOUR_LSP_SERVER%, {
       capabilities = capabilities
-    }
+    })
+    vim.lsp.enable(%YOUR_LSP_SERVER%)
   EOF
 <
 ==============================================================================
