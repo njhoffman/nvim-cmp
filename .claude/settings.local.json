@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /home/nicholas/ghq/github.com/njhoffman/nvim-cmp/lua/cmp/*.lua /home/nicholas/ghq/github.com/njhoffman/nvim-cmp/lua/cmp/utils/*.lua)"
+    ]
+  }
+}

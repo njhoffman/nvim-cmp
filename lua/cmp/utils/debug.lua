@@ -38,7 +38,7 @@ debug.log = function(...)
       end
       table.insert(data, v)
     end
-    vim.dbglog(table.concat(data, ' '))
+    -- vim.dbglog(table.concat(data, ' '))
   end
 end
 

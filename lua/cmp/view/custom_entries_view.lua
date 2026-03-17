@@ -134,7 +134,7 @@ end
 
 custom_entries_view.open = function(self, offset, entries)
   local c = config.get()
-  local completion = config.get().window.completion
+  local completion = c.window.completion
   assert(completion, 'config.get() must resolve window.completion with defaults')
 
   self.offset = offset
@@ -193,8 +193,6 @@ custom_entries_view.open = function(self, offset, entries)
   local border_info = window.get_border_info({ style = completion })
   local border_offset_row = border_info.top + border_info.bottom
   local border_offset_col = border_info.left + border_info.right
-  -- TODO: if laststatus = 1 check if more than one wnidow, if showtabline = 1 check if more than one tab
-
   local prefers_above = c.view.entries.vertical_positioning == 'above'
   local prefers_auto = c.view.entries.vertical_positioning == 'auto'
   local cant_fit_at_bottom = vim.o.lines - row - border_offset_row <= math.min(DEFAULT_HEIGHT, height)
