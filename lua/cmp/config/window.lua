@@ -12,7 +12,7 @@ window.bordered = function(opts)
     side_padding = opts.side_padding or 1,
     scrollbar = opts.scrollbar == nil and true or opts.scrollbar,
     max_width = opts.max_width or 0,
-    max_height = opts.max_height or 0,
+    max_height = opts.max_height or nil,
   }
 end
 
