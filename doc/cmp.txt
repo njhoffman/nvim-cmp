@@ -62,6 +62,10 @@ A recommended configuration can be found below.
   " Plug 'L3MON4D3/LuaSnip'
   " Plug 'saadparwaiz1/cmp_luasnip'
 
+  " For mini.snippets users.
+  " Plug 'echasnovski/mini.snippets'
+  " Plug 'abeldekat/cmp-mini-snippets'
+
   " For snippy users.
   " Plug 'dcampos/nvim-snippy'
   " Plug 'dcampos/cmp-snippy'
@@ -85,6 +89,13 @@ A recommended configuration can be found below.
           -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
           -- require'snippy'.expand_snippet(args.body) -- For `snippy` users.
           -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+          -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
+
+          -- For `mini.snippets` users:
+          -- local insert = MiniSnippets.config.expand.insert or MiniSnippets.default_insert
+          -- insert({ body = args.body }) -- Insert at cursor
+          -- cmp.resubscribe({ "TextChangedI", "TextChangedP" })
+          -- require("cmp.config").set_onetime({ sources = {} })
         end,
       },
       window = {
@@ -111,18 +122,24 @@ A recommended configuration can be found below.
     -- `/` cmdline setup.
     cmp.setup.cmdline('/', {
       mapping = cmp.mapping.preset.cmdline(),
-      sources = { { name = 'buffer' } }
+      sources = {
+        { name = 'buffer' }
+      }
     })
 
     -- `:` cmdline setup.
     cmp.setup.cmdline(':', {
       mapping = cmp.mapping.preset.cmdline(),
-      sources = cmp.config.sources({{ name = 'path' } }, { { name = 'cmdline' } })
+      sources = cmp.config.sources({
+        { name = 'path' }
+      }, {
+        { name = 'cmdline' }
+      }),
       matching = { disallow_symbol_nonprefix_matching = false }
     })
 
-    local capabilities = require('cmp_nvim_lsp').default_capabilities()
     -- Setup lspconfig.
+    local capabilities = require('cmp_nvim_lsp').default_capabilities()
     vim.lsp.config(%YOUR_LSP_SERVER%, {
       capabilities = capabilities
     })
@@ -472,13 +489,13 @@ performance.fetching_timeout~
     Sets the timeout of candidate fetching process.
     The nvim-cmp will wait to display the most prioritized source.
 
-                                      *cmp-config.performance.filtering_context_budget*
+                                *cmp-config.performance.filtering_context_budget*
 performance.filtering_context_budget~
     `number`
     Sets the filtering context budget in ms.
     If filtering takes longer than this, it will be deferred.
 
-                                        *cmp-config.performance.confirm_resolve_timeout*
+                                 *cmp-config.performance.confirm_resolve_timeout*
 performance.confirm_resolve_timeout~
     `number`
     Sets the timeout for resolving item before confirmation.
@@ -646,11 +663,6 @@ sources[n].max_item_count~
   The source-specific maximum item count option
   Note: This is applied before sorting, so items that aren't well-matched may be selected.
 
-                                          *cmp-config.sources[n].enabled*
-sources[n].enabled~
-  `boolean | fun(ctx: cmp.Source.context): boolean`
-  Whether this source should be enabled.
-
                                              *cmp-config.sources[n].group_index*
 sources[n].group_index~
   `number`
@@ -713,6 +725,7 @@ view.docs.auto_open~
   `boolean`
 
   Specify whether to show the docs_view when selecting an item.
+
                                                 *cmp-config.view.entries.selection_order*
 view.entries.selection_order~
   `string`
@@ -727,8 +740,7 @@ view.entries.follow_cursor~
   `boolean`
 
   Specify whether the pmenu should follow the current position of the cursor
-  as the user types. This works for both the custom and native views.
-  `false` by default.
+  as the user types. Custom view only. `false` by default.
 
                            *cmp-config.window.{completion,documentation}.border*
 window.{completion,documentation}.border~
@@ -746,6 +758,7 @@ window.{completion,documentation}.winhighlight~
 window.{completion,documentation}.winblend~
   `string | cmp.WinhighlightConfig`
   Specify the window's winblend option.
+  See |nvim_open_win|.
 
                            *cmp-config.window.{completion,documentation}.zindex*
 window.{completion,documentation}.zindex~
@@ -767,7 +780,7 @@ window.completion.col_offset~
                                      *cmp-config.window.completion.side_padding*
 window.completion.side_padding~
   `number`
-  The ammount of padding to add on the completion window's sides
+  The amount of padding to add on the completion window's sides
 
                                      *cmp-config.window.completion.scrollbar*
 window.completion.scrollbar~
@@ -882,14 +895,14 @@ Here is an example on how to create a custom source:
   end
 
   ---Return LSP's PositionEncodingKind.
-  ---@NOTE: If this method is ommited, the default value will be `utf-16`.
+  ---@NOTE: If this method is omitted, the default value will be `utf-16`.
   ---@return lsp.PositionEncodingKind
   function source:get_position_encoding_kind()
     return 'utf-16'
   end
 
   ---Return the keyword pattern for triggering completion (optional).
-  ---If this is ommited, nvim-cmp will use a default keyword pattern. See |cmp-config.completion.keyword_pattern|.
+  ---If this is omitted, nvim-cmp will use a default keyword pattern. See |cmp-config.completion.keyword_pattern|.
   ---@return string
   function source:get_keyword_pattern()
     return [[\k\+]]
@@ -993,7 +1006,7 @@ How to disable automatic display of docs view?~
   }
 <
 
-  additionaly, if you want to open/close docs view via your key mapping, you
+  additionally, if you want to open/close docs view via your key mapping, you
   can define keymapping as the following.
 >lua
   cmp.setup {
