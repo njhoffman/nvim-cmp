@@ -257,6 +257,8 @@ lsp.CompletionItemKind = misc.tbl_add_reverse_lookup(lsp.CompletionItemKind)
 ---@field public description? string
 
 ---@class lsp.internal.CmpCompletionExtension
+---@field public icon string
+---@field public icon_hl_group string
 ---@field public kind_text string
 ---@field public kind_hl_group string
 
