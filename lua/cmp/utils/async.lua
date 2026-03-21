@@ -1,4 +1,3 @@
-local feedkeys = require('cmp.utils.feedkeys')
 local config = require('cmp.config')
 
 local async = {}
@@ -24,18 +23,6 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
--- local debounce = function(cmp)
---   if timer and timer:is_active() then
---     timer:stop()
---     timer:start(
---       DEBOUNCE_DELAY,
---       0,
---       vim.schedule_wrap(function()
---         cmp.complete({ reason = cmp.ContextReason.Auto })
---       end)
---     )
---   end
--- end
 local timer_id
 async.debounce = function(func, delay)
   return function(...)
@@ -195,9 +182,6 @@ end
 ---Wait and callback for consuming next keymap.
 async.debounce_next_tick_by_keymap = function(callback)
   return function()
-    -- feedkeys.call('', '', callback)
-    -- Use vim.schedule instead of feedkeys to prevent command text insertion
-    -- into buffers
     vim.schedule(callback)
   end
 end

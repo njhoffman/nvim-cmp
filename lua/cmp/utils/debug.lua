@@ -79,9 +79,4 @@ debug.log_request = function(self, offset, completion_context)
     debug.log(debug.right_align(name), 'request  ', debug.right_align(offset, 3), kind and ' kind:' .. kind or '', char and ' char:' .. char or '')
   end
 end
-
--- ---Get current all entries
--- cmp.get_entries = cmp.sync(function()
---   return cmp.core.view:get_entries()
--- end)
 return debug
