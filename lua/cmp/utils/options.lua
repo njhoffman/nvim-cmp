@@ -7,7 +7,7 @@ local M = {}
 M.win_set_option = function(window, name, value)
   local eventignore = vim.opt.eventignore:get()
   vim.opt.eventignore:append('OptionSet')
-  vim.api.nvim_win_set_option(window, name, value)
+  vim.wo[window][name] = value
   vim.opt.eventignore = eventignore
 end
 
@@ -18,7 +18,7 @@ end
 M.buf_set_option = function(buffer, name, value)
   local eventignore = vim.opt.eventignore:get()
   vim.opt.eventignore:append('OptionSet')
-  vim.api.nvim_buf_set_option(buffer, name, value)
+  vim.bo[buffer][name] = value
   vim.opt.eventignore = eventignore
 end
 

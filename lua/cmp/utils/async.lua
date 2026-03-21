@@ -54,7 +54,7 @@ end
 ---@return cmp.AsyncThrottle
 async.throttle = function(fn, timeout)
   local time = nil
-  local timer = assert(vim.loop.new_timer())
+  local timer = assert(vim.uv.new_timer())
   local _async = nil ---@type Async?
   timers[#timers + 1] = timer
   local throttle
@@ -86,11 +86,11 @@ async.throttle = function(fn, timeout)
       local args = { ... }
 
       if time == nil then
-        time = vim.loop.now()
+        time = vim.uv.now()
       end
       self.stop(false)
       self.running = true
-      timer:start(math.max(1, self.timeout - (vim.loop.now() - time)), 0, function()
+      timer:start(math.max(1, self.timeout - (vim.uv.now() - time)), 0, function()
         vim.schedule(function()
           time = nil
           local ret = fn(unpack(args))
@@ -141,7 +141,7 @@ async.timeout = function(fn, timeout)
       fn(...)
     end
   end
-  timer = vim.loop.new_timer()
+  timer = vim.uv.new_timer()
   timer:start(timeout, 0, function()
     callback()
   end)
@@ -204,12 +204,12 @@ end
 
 local Scheduler = {}
 Scheduler._queue = {}
-Scheduler._executor = assert(vim.loop.new_check())
+Scheduler._executor = assert(vim.uv.new_check())
 
 function Scheduler.step()
   local budget = config.get().performance.async_budget * 1e6
-  local start = vim.loop.hrtime()
-  while #Scheduler._queue > 0 and vim.loop.hrtime() - start < budget do
+  local start = vim.uv.hrtime()
+  while #Scheduler._queue > 0 and vim.uv.hrtime() - start < budget do
     local a = table.remove(Scheduler._queue, 1)
     a:_step()
     if a.running then

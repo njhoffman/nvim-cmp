@@ -164,7 +164,7 @@ wildmenu_entries_view.draw = function(self)
   end
 
   vim.api.nvim_buf_set_lines(entries_buf, 0, 1, false, { table.concat(texts, self:_get_separator()) })
-  vim.api.nvim_buf_set_option(entries_buf, 'modified', false)
+  vim.bo[entries_buf].modified = false
 
   vim.api.nvim_win_call(0, function()
     misc.redraw()
