@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.6](https://github.com/njhoffman/nvim-cmp/compare/v0.1.5...v0.1.6) (2026-04-26)
+
+### Bug Fixes
+
+- `:CmpStatus main` no longer lists sources that are only configured for `cmdline` / `filetype` / `buffer` contexts. Sources owned by those scopes (e.g. `cmdline`, `cmdline_history`) appear under their own `:CmpStatus cmdline` / `:CmpStatus filetype` output instead of cluttering main's "unused" bucket. Truly registered-but-unconfigured sources still show up there.
+
 ## [0.1.5](https://github.com/njhoffman/nvim-cmp/compare/v0.1.4...v0.1.5) (2026-04-25)
 
 ### Bug Fixes

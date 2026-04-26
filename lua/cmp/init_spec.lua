@@ -40,6 +40,20 @@ describe('cmp.gather_status', function()
     assert.is_true(vim.tbl_contains(main.invalid, 'ghost'))
   end)
 
+  it('main scope hides sources that are only configured for cmdline/filetype/buffer', function()
+    config.set_global({ sources = { { name = 'lsp' } } })
+    config.set_cmdline({ sources = { { name = 'cmdline_only' } } }, ':')
+    config.set_filetype({ sources = { { name = 'lua_only' } } }, 'lua')
+
+    local main = cmp.gather_status('main')[1]
+
+    assert.is_true(vim.tbl_contains(main.available, 'lsp'))
+    assert.is_false(vim.tbl_contains(main.installed, 'cmdline_only'))
+    assert.is_false(vim.tbl_contains(main.installed, 'lua_only'))
+    -- `buffer` is registered but not referenced anywhere, so it stays in `installed`.
+    assert.is_true(vim.tbl_contains(main.installed, 'buffer'))
+  end)
+
   it('cmdline scope only shows sources for cmdtypes', function()
     config.set_cmdline({ sources = { { name = 'cmdline_only' }, { name = 'missing_cmd' } } }, ':')
     config.set_cmdline({ sources = { { name = 'buffer' } } }, '/')

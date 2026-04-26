@@ -285,6 +285,26 @@ cmp.gather_status = function(context)
   local scopes = {}
 
   if context == 'main' then
+    -- Sources referenced only in non-main contexts (cmdline / filetype /
+    -- buffer) are owned by those scopes; surface them under their own
+    -- :CmpStatus subcommand instead of cluttering main's "unused" bucket.
+    local referenced_elsewhere = {}
+    for _, c in pairs(config.cmdline) do
+      for _, src in ipairs(c.sources or {}) do
+        referenced_elsewhere[src.name] = true
+      end
+    end
+    for _, c in pairs(config.filetypes) do
+      for _, src in ipairs(c.sources or {}) do
+        referenced_elsewhere[src.name] = true
+      end
+    end
+    for _, c in pairs(config.buffers) do
+      for _, src in ipairs(c.sources or {}) do
+        referenced_elsewhere[src.name] = true
+      end
+    end
+
     local entry = { label = 'main', available = {}, unavailable = {}, installed = {}, invalid = {} }
     local names = {}
     for _, s in pairs(cmp.core.sources) do
@@ -295,7 +315,7 @@ cmp.gather_status = function(context)
         else
           table.insert(entry.unavailable, s:get_debug_name())
         end
-      else
+      elseif not referenced_elsewhere[s.name] then
         table.insert(entry.installed, s:get_debug_name())
       end
     end
