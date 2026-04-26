@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.4](https://github.com/njhoffman/nvim-cmp/compare/v0.1.3...v0.1.4) (2026-04-25)
+
+### Features
+
+- new `window.completion.top_padding` and `window.documentation.top_padding` options. Integer ≥ 0 (default `0`); inserts that many rows of vertical gap between the cursor and the window. Applied symmetrically when the window opens above the cursor (`view.entries.vertical_positioning = 'above'|'auto'`). The two windows have independent settings.
+
+### Chores
+
+- ci: `format.yaml` workflow switched to `workflow_dispatch` so stylua no longer auto-rewrites code on push.
+
 ## [0.1.3](https://github.com/njhoffman/nvim-cmp/compare/v0.1.2...v0.1.3) (2026-04-25)
 
 ### Features

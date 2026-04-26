@@ -104,7 +104,8 @@ docs_view.open = function(self, e, view, bottom_up)
     return self:close()
   end
 
-  local row = bottom_up and math.max(view.row - (height + border_info.vert - view.height), 1) or view.row
+  local doc_top_padding = math.max(0, documentation.top_padding or 0)
+  local row = bottom_up and math.max(view.row - (height + border_info.vert - view.height) - doc_top_padding, 1) or (view.row + doc_top_padding)
 
   -- Render window.
   self.window:option('winblend', documentation.winblend)

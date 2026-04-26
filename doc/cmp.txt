@@ -818,6 +818,17 @@ window.completion.side_padding~
   `number`
   The amount of padding to add on the completion window's sides
 
+                       *cmp-config.window.{completion,documentation}.top_padding*
+window.{completion,documentation}.top_padding~
+  `integer`
+  Number of rows of vertical gap to insert between the cursor and the
+  window. `0` by default. When the window is positioned above the cursor
+  (see |cmp-config.view.entries.vertical_positioning|), the gap is
+  applied symmetrically — i.e. the window shifts further away from the
+  cursor in whichever direction it opens. The completion and
+  documentation windows have independent settings; setting one does not
+  shift the other.
+
                                      *cmp-config.window.completion.scrollbar*
 window.completion.scrollbar~
   `boolean`

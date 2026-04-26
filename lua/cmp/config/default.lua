@@ -115,6 +115,7 @@ return function()
         scrolloff = 0,
         col_offset = 0,
         side_padding = 1,
+        top_padding = 0,
         scrollbar = true,
       },
       documentation = {
@@ -124,6 +125,7 @@ return function()
         winhighlight = 'FloatBorder:NormalFloat',
         winblend = vim.o.pumblend,
         col_offset = 0,
+        top_padding = 0,
       },
     },
   }
