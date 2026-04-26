@@ -1,11 +1,9 @@
 name: format
 
+# Auto-format on push is disabled for now; trigger manually from the Actions
+# tab when a stylua sweep is wanted.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '**.lua'
+  workflow_dispatch:
 
 jobs:
   postprocessing:
