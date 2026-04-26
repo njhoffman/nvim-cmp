@@ -282,6 +282,34 @@ cmp.gather_status = function(context)
     registered_by_name[s.name] = s
   end
 
+  -- Walk a source list in priority order (groups first, then position within
+  -- a group) and drop each entry into available / unavailable / invalid with
+  -- a "name G.O" label, where G = group_index and O = the source's position
+  -- inside that group. Sources without group_index default to group 1.
+  -- check_availability is only used for the main context, where is_available()
+  -- runs against the live config; cmdline / filetype configs aren't the live
+  -- one when status is invoked outside that mode, so we just bucket as
+  -- available if the source is registered.
+  local function bucket_sources(entry, sources_list, check_availability)
+    local group_positions = {}
+    for _, src_config in ipairs(sources_list) do
+      local g = src_config.group_index or 1
+      group_positions[g] = (group_positions[g] or 0) + 1
+      local o = group_positions[g]
+      local s = registered_by_name[src_config.name]
+      if s then
+        local label = ('%s %d.%d'):format(s:get_debug_name(), g, o)
+        if check_availability and not s:is_available() then
+          table.insert(entry.unavailable, label)
+        else
+          table.insert(entry.available, label)
+        end
+      else
+        table.insert(entry.invalid, src_config.name)
+      end
+    end
+  end
+
   local scopes = {}
 
   if context == 'main' then
@@ -306,24 +334,20 @@ cmp.gather_status = function(context)
     end
 
     local entry = { label = 'main', available = {}, unavailable = {}, installed = {}, invalid = {} }
-    local names = {}
+    local main_sources = config.get().sources or {}
+
+    bucket_sources(entry, main_sources, true)
+
+    local in_main = {}
+    for _, src_config in ipairs(main_sources) do
+      in_main[src_config.name] = true
+    end
     for _, s in pairs(cmp.core.sources) do
-      names[s.name] = true
-      if config.get_source_config(s.name) then
-        if s:is_available() then
-          table.insert(entry.available, s:get_debug_name())
-        else
-          table.insert(entry.unavailable, s:get_debug_name())
-        end
-      elseif not referenced_elsewhere[s.name] then
+      if not in_main[s.name] and not referenced_elsewhere[s.name] then
         table.insert(entry.installed, s:get_debug_name())
       end
     end
-    for _, s in ipairs(config.get().sources) do
-      if not names[s.name] then
-        table.insert(entry.invalid, s.name)
-      end
-    end
+
     table.insert(scopes, entry)
   elseif context == 'cmdline' or context == 'filetype' then
     local table_ref = context == 'cmdline' and config.cmdline or config.filetypes
@@ -333,14 +357,7 @@ cmp.gather_status = function(context)
     for _, key in ipairs(keys) do
       local c = table_ref[key]
       local entry = { label = label_fmt:format(key), available = {}, unavailable = {}, installed = {}, invalid = {} }
-      for _, src in ipairs(c.sources or {}) do
-        local s = registered_by_name[src.name]
-        if s then
-          table.insert(entry.available, s:get_debug_name())
-        else
-          table.insert(entry.invalid, src.name)
-        end
-      end
+      bucket_sources(entry, c.sources or {}, false)
       table.insert(scopes, entry)
     end
   else

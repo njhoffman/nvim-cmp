@@ -35,7 +35,7 @@ describe('cmp.gather_status', function()
     local main = scopes[1]
     assert.are.equal('main', main.label)
 
-    assert.is_true(vim.tbl_contains(main.available, 'lsp'))
+    assert.is_true(vim.tbl_contains(main.available, 'lsp 1.1'))
     assert.is_true(vim.tbl_contains(main.installed, 'buffer'))
     assert.is_true(vim.tbl_contains(main.invalid, 'ghost'))
   end)
@@ -47,11 +47,32 @@ describe('cmp.gather_status', function()
 
     local main = cmp.gather_status('main')[1]
 
-    assert.is_true(vim.tbl_contains(main.available, 'lsp'))
+    assert.is_true(vim.tbl_contains(main.available, 'lsp 1.1'))
     assert.is_false(vim.tbl_contains(main.installed, 'cmdline_only'))
     assert.is_false(vim.tbl_contains(main.installed, 'lua_only'))
     -- `buffer` is registered but not referenced anywhere, so it stays in `installed`.
     assert.is_true(vim.tbl_contains(main.installed, 'buffer'))
+  end)
+
+  it('main available bucket is sorted by group and labelled with group.order', function()
+    -- Mirror cmp.config.sources(group1, group2): group_index tags + flat list.
+    config.set_global({
+      sources = {
+        { name = 'lsp', group_index = 1 },
+        { name = 'lua_only', group_index = 2 },
+        { name = 'buffer', group_index = 2 },
+        { name = 'cmdline_only', group_index = 2 },
+      },
+    })
+
+    local main = cmp.gather_status('main')[1]
+
+    assert.are.same({
+      'lsp 1.1',
+      'lua_only 2.1',
+      'buffer 2.2',
+      'cmdline_only 2.3',
+    }, main.available)
   end)
 
   it('cmdline scope only shows sources for cmdtypes', function()
@@ -68,13 +89,13 @@ describe('cmp.gather_status', function()
 
     local colon = by_label['cmdline `:`']
     assert.is_not_nil(colon)
-    assert.is_true(vim.tbl_contains(colon.available, 'cmdline_only'))
+    assert.is_true(vim.tbl_contains(colon.available, 'cmdline_only 1.1'))
     assert.is_true(vim.tbl_contains(colon.invalid, 'missing_cmd'))
-    assert.is_false(vim.tbl_contains(colon.available, 'lsp'))
+    assert.is_false(vim.tbl_contains(colon.available, 'lsp 1.1'))
 
     local search = by_label['cmdline `/`']
     assert.is_not_nil(search)
-    assert.is_true(vim.tbl_contains(search.available, 'buffer'))
+    assert.is_true(vim.tbl_contains(search.available, 'buffer 1.1'))
     assert.are.equal(0, #search.invalid)
   end)
 
@@ -92,12 +113,12 @@ describe('cmp.gather_status', function()
 
     local lua = by_label['filetype `lua`']
     assert.is_not_nil(lua)
-    assert.is_true(vim.tbl_contains(lua.available, 'lua_only'))
-    assert.is_false(vim.tbl_contains(lua.available, 'lsp'))
+    assert.is_true(vim.tbl_contains(lua.available, 'lua_only 1.1'))
+    assert.is_false(vim.tbl_contains(lua.available, 'lsp 1.1'))
 
     local rust = by_label['filetype `rust`']
     assert.is_not_nil(rust)
-    assert.is_true(vim.tbl_contains(rust.available, 'lsp'))
+    assert.is_true(vim.tbl_contains(rust.available, 'lsp 1.1'))
     assert.is_true(vim.tbl_contains(rust.invalid, 'ghost'))
   end)
 

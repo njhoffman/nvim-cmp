@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.7](https://github.com/njhoffman/nvim-cmp/compare/v0.1.6...v0.1.7) (2026-04-26)
+
+### Features
+
+- `:CmpStatus` (any context) now lists ready / unavailable sources in priority order — group index first, then position within the group — and annotates each name with a `G.O` suffix (e.g. `lazydev 1.1`, `copilot 2.1`, `nvim_lsp 2.2`). Sources without an explicit `group_index` default to group `1`.
+
 ## [0.1.6](https://github.com/njhoffman/nvim-cmp/compare/v0.1.5...v0.1.6) (2026-04-26)
 
 ### Bug Fixes
