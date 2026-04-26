@@ -19,10 +19,7 @@ local setup = function(cmp)
       cmp.core:on_change('TextChanged')
     end
   end
-  autocmd.subscribe(
-    { 'TextChangedI', 'TextChangedP' },
-    async.debounce(on_text_changed, config.get().performance.trigger_debounce)
-  )
+  autocmd.subscribe({ 'TextChangedI', 'TextChangedP' }, async.debounce(on_text_changed, config.get().performance.trigger_debounce))
   autocmd.subscribe('CmdlineChanged', async.debounce_next_tick(on_text_changed))
 
   autocmd.subscribe('CursorMovedI', function()
