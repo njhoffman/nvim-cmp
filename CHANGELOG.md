@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/njhoffman/nvim-cmp/compare/v0.1.2...v0.1.3) (2026-04-25)
+
+### Features
+
+- `:CmpStatus` now accepts an optional context argument: `main` (default), `cmdline`, or `filetype`. Cmdline and filetype contexts list one section per registered cmdtype/filetype with that scope's configured sources only.
+- new `:CmpDebugOn` / `:CmpDebugOff` toggle pair for `cmp.utils.debug.flag`. Only one of the two is registered at any time; invoking it flips the flag and swaps which command is available.
+- new `cmp.gather_status(context)` helper that returns the structured status buckets per scope (used internally by `:CmpStatus`, available for plugin authors).
+
 ## [0.1.2](https://github.com/njhoffman/nvim-cmp/compare/v0.1.1...v0.1.2) (2026-04-25)
 
 ### Bug Fixes

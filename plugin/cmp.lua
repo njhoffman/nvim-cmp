@@ -58,8 +58,38 @@ if vim.on_key then
   end, vim.api.nvim_create_namespace('cmp.plugin'))
 end
 
-vim.api.nvim_create_user_command('CmpStatus', function()
-  require('cmp').status()
-end, { desc = 'Check status of cmp sources' })
+local cmp_status_contexts = { 'main', 'cmdline', 'filetype' }
+vim.api.nvim_create_user_command('CmpStatus', function(opts)
+  local context = opts.args ~= '' and opts.args or 'main'
+  if not vim.tbl_contains(cmp_status_contexts, context) then
+    vim.notify(("CmpStatus: unknown subcommand `%s` (expected main|cmdline|filetype)"):format(context), vim.log.levels.ERROR)
+    return
+  end
+  require('cmp').status(context)
+end, {
+  desc = 'Check status of cmp sources for a context (main|cmdline|filetype)',
+  nargs = '?',
+  complete = function()
+    return cmp_status_contexts
+  end,
+})
+
+local function refresh_debug_command()
+  local debug = require('cmp.utils.debug')
+  pcall(vim.api.nvim_del_user_command, 'CmpDebugOn')
+  pcall(vim.api.nvim_del_user_command, 'CmpDebugOff')
+  if debug.flag then
+    vim.api.nvim_create_user_command('CmpDebugOff', function()
+      debug.disable()
+      refresh_debug_command()
+    end, { desc = 'Disable cmp debug logging' })
+  else
+    vim.api.nvim_create_user_command('CmpDebugOn', function()
+      debug.enable()
+      refresh_debug_command()
+    end, { desc = 'Enable cmp debug logging' })
+  end
+end
+refresh_debug_command()
 
 vim.cmd([[doautocmd <nomodeline> User CmpReady]])

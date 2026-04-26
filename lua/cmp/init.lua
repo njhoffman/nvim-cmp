@@ -267,62 +267,114 @@ cmp.confirm = cmp.sync(function(option, callback)
   return false
 end)
 
----Show status
-cmp.status = function()
-  local kinds = {}
-  kinds.available = {}
-  kinds.unavailable = {}
-  kinds.installed = {}
-  kinds.invalid = {}
-  local names = {}
+---Build status buckets per scope for the given context.
+---For `main`, returns one scope (the active insert-mode config) with the same
+---buckets the original `cmp.status` produced. For `cmdline` / `filetype`,
+---returns one scope per registered cmdtype / filetype, listing its configured
+---sources and flagging any that aren't registered.
+---@param context 'main'|'cmdline'|'filetype'|nil
+---@return { label: string, available: string[], unavailable: string[], installed: string[], invalid: string[] }[]
+cmp.gather_status = function(context)
+  context = context or 'main'
+
+  local registered_by_name = {}
   for _, s in pairs(cmp.core.sources) do
-    names[s.name] = true
+    registered_by_name[s.name] = s
+  end
 
-    if config.get_source_config(s.name) then
-      if s:is_available() then
-        table.insert(kinds.available, s:get_debug_name())
+  local scopes = {}
+
+  if context == 'main' then
+    local entry = { label = 'main', available = {}, unavailable = {}, installed = {}, invalid = {} }
+    local names = {}
+    for _, s in pairs(cmp.core.sources) do
+      names[s.name] = true
+      if config.get_source_config(s.name) then
+        if s:is_available() then
+          table.insert(entry.available, s:get_debug_name())
+        else
+          table.insert(entry.unavailable, s:get_debug_name())
+        end
       else
-        table.insert(kinds.unavailable, s:get_debug_name())
+        table.insert(entry.installed, s:get_debug_name())
       end
-    else
-      table.insert(kinds.installed, s:get_debug_name())
     end
-  end
-  for _, s in ipairs(config.get().sources) do
-    if not names[s.name] then
-      table.insert(kinds.invalid, s.name)
+    for _, s in ipairs(config.get().sources) do
+      if not names[s.name] then
+        table.insert(entry.invalid, s.name)
+      end
     end
-  end
-
-  if #kinds.available > 0 then
-    vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
-    vim.api.nvim_echo({ { '# ready source names\n', 'Special' } }, false, {})
-    for _, name in ipairs(kinds.available) do
-      vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
+    table.insert(scopes, entry)
+  elseif context == 'cmdline' or context == 'filetype' then
+    local table_ref = context == 'cmdline' and config.cmdline or config.filetypes
+    local label_fmt = context == 'cmdline' and 'cmdline `%s`' or 'filetype `%s`'
+    local keys = vim.tbl_keys(table_ref)
+    table.sort(keys)
+    for _, key in ipairs(keys) do
+      local c = table_ref[key]
+      local entry = { label = label_fmt:format(key), available = {}, unavailable = {}, installed = {}, invalid = {} }
+      for _, src in ipairs(c.sources or {}) do
+        local s = registered_by_name[src.name]
+        if s then
+          table.insert(entry.available, s:get_debug_name())
+        else
+          table.insert(entry.invalid, src.name)
+        end
+      end
+      table.insert(scopes, entry)
     end
-  end
-
-  if #kinds.unavailable > 0 then
-    vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
-    vim.api.nvim_echo({ { '# unavailable source names\n', 'Comment' } }, false, {})
-    for _, name in ipairs(kinds.unavailable) do
-      vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
-    end
-  end
-
-  if #kinds.installed > 0 then
-    vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
-    vim.api.nvim_echo({ { '# unused source names\n', 'WarningMsg' } }, false, {})
-    for _, name in ipairs(kinds.installed) do
-      vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
-    end
+  else
+    error(('cmp.status: unknown context `%s` (expected main|cmdline|filetype)'):format(tostring(context)))
   end
 
-  if #kinds.invalid > 0 then
-    vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
-    vim.api.nvim_echo({ { '# unknown source names\n', 'ErrorMsg' } }, false, {})
-    for _, name in ipairs(kinds.invalid) do
-      vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
+  return scopes
+end
+
+---Show status
+---@param context 'main'|'cmdline'|'filetype'|nil
+cmp.status = function(context)
+  local scopes = cmp.gather_status(context)
+
+  if #scopes == 0 then
+    vim.api.nvim_echo({ { '\n', 'Normal' }, { ('# no %s configurations registered\n'):format(context or 'main'), 'Comment' } }, false, {})
+    return
+  end
+
+  for _, scope in ipairs(scopes) do
+    if scope.label ~= 'main' then
+      vim.api.nvim_echo({ { '\n', 'Normal' }, { ('## %s\n'):format(scope.label), 'Title' } }, false, {})
+    end
+
+    if #scope.available > 0 then
+      vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
+      vim.api.nvim_echo({ { '# ready source names\n', 'Special' } }, false, {})
+      for _, name in ipairs(scope.available) do
+        vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
+      end
+    end
+
+    if #scope.unavailable > 0 then
+      vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
+      vim.api.nvim_echo({ { '# unavailable source names\n', 'Comment' } }, false, {})
+      for _, name in ipairs(scope.unavailable) do
+        vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
+      end
+    end
+
+    if #scope.installed > 0 then
+      vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
+      vim.api.nvim_echo({ { '# unused source names\n', 'WarningMsg' } }, false, {})
+      for _, name in ipairs(scope.installed) do
+        vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
+      end
+    end
+
+    if #scope.invalid > 0 then
+      vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
+      vim.api.nvim_echo({ { '# unknown source names\n', 'ErrorMsg' } }, false, {})
+      for _, name in ipairs(scope.invalid) do
+        vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
+      end
     end
   end
 end

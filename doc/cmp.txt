@@ -385,11 +385,28 @@ If you want to call nvim-cmp features directly, please use |cmp-function| instea
 ==============================================================================
 Command                                                            *cmp-command*
 
-*CmpStatus*
-  Describes statuses and states of sources.
+*CmpStatus* [main|cmdline|filetype]
+  Describes statuses and states of sources for a given context.
+
+  Sub-commands:
+  - `main` (default if omitted) — the insert-mode sources resolved against the
+    current buffer / filetype / global config. Sources are bucketed as ready,
+    unavailable, unused, or unknown.
+  - `cmdline` — one section per cmdtype configured via `cmp.setup.cmdline`,
+    listing just that cmdtype's sources. Sources not registered are flagged
+    as unknown.
+  - `filetype` — one section per filetype configured via `cmp.setup.filetype`,
+    listing just that filetype's sources. Same unknown flagging.
+
   Sometimes `unknown` will be printed - this is expected.
   For example, `cmp-nvim-lsp` registers itself on InsertEnter autocommand
   so the status will be shown as `unknown` when running the command.
+
+*CmpDebugOn* / *CmpDebugOff*
+  Toggle the |cmp.utils.debug| log flag. Only one of the two commands is
+  registered at a time: `CmpDebugOn` while logging is off, `CmpDebugOff` while
+  it is on. Invoking either flips the flag and swaps which command is
+  available.
 
 
 
