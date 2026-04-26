@@ -74,6 +74,41 @@ end, {
   end,
 })
 
+vim.api.nvim_create_user_command('CmpQuery', function(opts)
+  local args = opts.fargs
+  if #args < 2 then
+    vim.notify('CmpQuery: usage `:CmpQuery <main|cmdline|filetype> <query...>`', vim.log.levels.ERROR)
+    return
+  end
+  local context = args[1]
+  if not vim.tbl_contains(cmp_status_contexts, context) then
+    vim.notify(("CmpQuery: unknown context `%s` (expected main|cmdline|filetype)"):format(context), vim.log.levels.ERROR)
+    return
+  end
+  local query = table.concat(vim.list_slice(args, 2), ' ')
+  require('cmp').query({ context = context, query = query }, function(report)
+    require('cmp.view.query_view').open(report)
+  end)
+end, {
+  desc = 'Probe cmp sources with a query string and show timing/result data',
+  nargs = '+',
+  complete = function(arg_lead, cmd_line)
+    -- Complete the first arg only.
+    local before = cmd_line:sub(1, -#arg_lead - 1)
+    local _, n = before:gsub('%s+', ' ')
+    if n <= 1 then
+      local out = {}
+      for _, c in ipairs(cmp_status_contexts) do
+        if c:sub(1, #arg_lead) == arg_lead then
+          table.insert(out, c)
+        end
+      end
+      return out
+    end
+    return {}
+  end,
+})
+
 local function refresh_debug_command()
   local debug = require('cmp.utils.debug')
   pcall(vim.api.nvim_del_user_command, 'CmpDebugOn')

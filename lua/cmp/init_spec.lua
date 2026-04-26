@@ -133,3 +133,116 @@ describe('cmp.gather_status', function()
     end)
   end)
 end)
+
+describe('cmp.query', function()
+  before_each(function()
+    config.global = require('cmp.config.default')()
+    config.cmdline = {}
+    config.filetypes = {}
+    config.buffers = {}
+    config.onetime = {}
+    config.cache:clear()
+    cmp.core.sources = {}
+  end)
+
+  after_each(function()
+    cmp.core.sources = {}
+    config.global = require('cmp.config.default')()
+    config.cmdline = {}
+    config.filetypes = {}
+    config.cache:clear()
+  end)
+
+  ---Register a fake source that synchronously returns the given items.
+  local function register_source(name, items)
+    local s = source.new(name, {
+      complete = function(_, _, callback)
+        callback(items)
+      end,
+    })
+    cmp.core.sources[s.id] = s
+    return s
+  end
+
+  it('returns one result per configured source with timing and counts', function()
+    register_source('fast', {
+      { label = 'apple', kind = 1 },
+      { label = 'apricot', kind = 1 },
+    })
+    register_source('slow', {
+      { label = 'avocado', kind = 6 },
+    })
+
+    config.set_global({
+      sources = {
+        { name = 'fast', group_index = 1 },
+        { name = 'slow', group_index = 2 },
+      },
+    })
+
+    local report
+    cmp.query({ context = 'main', query = 'a', timeout = 1500 }, function(r)
+      report = r
+    end)
+
+    assert.is_not_nil(report)
+    assert.are.equal('main', report.context)
+    assert.are.equal('a', report.query)
+    assert.are.equal(2, #report.results)
+    assert.is_false(report.timed_out)
+
+    local by_name = {}
+    for _, r in ipairs(report.results) do
+      by_name[r.name] = r
+    end
+
+    assert.is_true(by_name.fast.registered)
+    assert.are.equal(2, by_name.fast.count)
+    assert.are.equal('apple', by_name.fast.items[1].label)
+    assert.are.equal('Invoked', by_name.fast.trigger)
+    assert.are.equal('COMPLETED', by_name.fast.status)
+
+    assert.is_true(by_name.slow.registered)
+    assert.are.equal(1, by_name.slow.count)
+    assert.are.equal(2, by_name.slow.group_index)
+
+    assert.are.equal(3, report.total_count)
+    assert.is_true(report.total_time_ms >= 0)
+  end)
+
+  it('flags configured sources that are not registered', function()
+    register_source('lsp', { { label = 'foo' } })
+    config.set_global({ sources = { { name = 'lsp' }, { name = 'ghost' } } })
+
+    local report
+    cmp.query({ context = 'main', query = 'f', timeout = 500 }, function(r)
+      report = r
+    end)
+
+    local by_name = {}
+    for _, r in ipairs(report.results) do
+      by_name[r.name] = r
+    end
+
+    assert.is_true(by_name.lsp.registered)
+    assert.is_false(by_name.ghost.registered)
+    assert.are.equal('NOT_REGISTERED', by_name.ghost.status)
+    assert.are.equal('not registered', by_name.ghost.error)
+  end)
+
+  it('queries a configured cmdtype when context = cmdline', function()
+    register_source('cmd', { { label = 'help' } })
+    config.set_cmdline({ sources = { { name = 'cmd' } } }, ':')
+
+    local report
+    cmp.query({ context = 'cmdline', query = 'h', timeout = 500 }, function(r)
+      report = r
+    end)
+
+    assert.are.equal('cmdline', report.context)
+    assert.are.equal(':', report.sub)
+    assert.are.equal(1, #report.results)
+    assert.are.equal('cmd', report.results[1].name)
+    assert.are.equal(1, report.results[1].count)
+  end)
+end)

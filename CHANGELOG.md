@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/njhoffman/nvim-cmp/compare/v0.1.7...v0.1.8) (2026-04-26)
+
+### Features
+
+- new `:CmpQuery {main|cmdline|filetype} {query}` command. Builds a synthetic completion context with `cursor_before_line = {query}` and reason = Manual, fires every configured source for that context with timing, and renders the results in a floating popup. Each line shows the source's `name G`, status, item count, response time, and trigger info. `<CR>` / `<Tab>` expands a source to list individual items; `q` / `<Esc>` closes. Summary line reports aggregate item count and wall-clock time.
+- new `cmp.query(opts, callback)` API exposing the same data shape that the popup consumes (so plugin authors / scripts can run completion probes programmatically).
+
 ## [0.1.7](https://github.com/njhoffman/nvim-cmp/compare/v0.1.6...v0.1.7) (2026-04-26)
 
 ### Features

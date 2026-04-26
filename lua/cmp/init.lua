@@ -2,9 +2,11 @@ local core = require('cmp.core')
 local source = require('cmp.source')
 local autocmds = require('cmp.autocmds')
 local config = require('cmp.config')
+local context = require('cmp.context')
 local feedkeys = require('cmp.utils.feedkeys')
 local keymap = require('cmp.utils.keymap')
 local misc = require('cmp.utils.misc')
+local types = require('cmp.types')
 
 local cmp = {}
 
@@ -274,8 +276,8 @@ end)
 ---sources and flagging any that aren't registered.
 ---@param context 'main'|'cmdline'|'filetype'|nil
 ---@return { label: string, available: string[], unavailable: string[], installed: string[], invalid: string[] }[]
-cmp.gather_status = function(context)
-  context = context or 'main'
+cmp.gather_status = function(scope)
+  scope = scope or 'main'
 
   local registered_by_name = {}
   for _, s in pairs(cmp.core.sources) do
@@ -312,7 +314,7 @@ cmp.gather_status = function(context)
 
   local scopes = {}
 
-  if context == 'main' then
+  if scope == 'main' then
     -- Sources referenced only in non-main contexts (cmdline / filetype /
     -- buffer) are owned by those scopes; surface them under their own
     -- :CmpStatus subcommand instead of cluttering main's "unused" bucket.
@@ -349,9 +351,9 @@ cmp.gather_status = function(context)
     end
 
     table.insert(scopes, entry)
-  elseif context == 'cmdline' or context == 'filetype' then
-    local table_ref = context == 'cmdline' and config.cmdline or config.filetypes
-    local label_fmt = context == 'cmdline' and 'cmdline `%s`' or 'filetype `%s`'
+  elseif scope == 'cmdline' or scope == 'filetype' then
+    local table_ref = scope == 'cmdline' and config.cmdline or config.filetypes
+    local label_fmt = scope == 'cmdline' and 'cmdline `%s`' or 'filetype `%s`'
     local keys = vim.tbl_keys(table_ref)
     table.sort(keys)
     for _, key in ipairs(keys) do
@@ -361,59 +363,240 @@ cmp.gather_status = function(context)
       table.insert(scopes, entry)
     end
   else
-    error(('cmp.status: unknown context `%s` (expected main|cmdline|filetype)'):format(tostring(context)))
+    error(('cmp.status: unknown context `%s` (expected main|cmdline|filetype)'):format(tostring(scope)))
   end
 
   return scopes
 end
 
 ---Show status
----@param context 'main'|'cmdline'|'filetype'|nil
-cmp.status = function(context)
-  local scopes = cmp.gather_status(context)
+---@param scope 'main'|'cmdline'|'filetype'|nil
+cmp.status = function(scope)
+  local scopes = cmp.gather_status(scope)
 
   if #scopes == 0 then
-    vim.api.nvim_echo({ { '\n', 'Normal' }, { ('# no %s configurations registered\n'):format(context or 'main'), 'Comment' } }, false, {})
+    vim.api.nvim_echo({ { '\n', 'Normal' }, { ('# no %s configurations registered\n'):format(scope or 'main'), 'Comment' } }, false, {})
     return
   end
 
-  for _, scope in ipairs(scopes) do
-    if scope.label ~= 'main' then
-      vim.api.nvim_echo({ { '\n', 'Normal' }, { ('## %s\n'):format(scope.label), 'Title' } }, false, {})
+  for _, sc in ipairs(scopes) do
+    if sc.label ~= 'main' then
+      vim.api.nvim_echo({ { '\n', 'Normal' }, { ('## %s\n'):format(sc.label), 'Title' } }, false, {})
     end
 
-    if #scope.available > 0 then
+    if #sc.available > 0 then
       vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
       vim.api.nvim_echo({ { '# ready source names\n', 'Special' } }, false, {})
-      for _, name in ipairs(scope.available) do
+      for _, name in ipairs(sc.available) do
         vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
       end
     end
 
-    if #scope.unavailable > 0 then
+    if #sc.unavailable > 0 then
       vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
       vim.api.nvim_echo({ { '# unavailable source names\n', 'Comment' } }, false, {})
-      for _, name in ipairs(scope.unavailable) do
+      for _, name in ipairs(sc.unavailable) do
         vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
       end
     end
 
-    if #scope.installed > 0 then
+    if #sc.installed > 0 then
       vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
       vim.api.nvim_echo({ { '# unused source names\n', 'WarningMsg' } }, false, {})
-      for _, name in ipairs(scope.installed) do
+      for _, name in ipairs(sc.installed) do
         vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
       end
     end
 
-    if #scope.invalid > 0 then
+    if #sc.invalid > 0 then
       vim.api.nvim_echo({ { '\n', 'Normal' } }, false, {})
       vim.api.nvim_echo({ { '# unknown source names\n', 'ErrorMsg' } }, false, {})
-      for _, name in ipairs(scope.invalid) do
+      for _, name in ipairs(sc.invalid) do
         vim.api.nvim_echo({ { ('- %s\n'):format(name), 'Normal' } }, false, {})
       end
     end
   end
+end
+
+---Resolve the source list for a query context.
+---@param ctx 'main'|'cmdline'|'filetype'
+---@param sub string|nil cmdtype (for cmdline) or filetype (for filetype context)
+---@return table[] sources_list, string|nil resolved_sub
+local function resolve_query_sources(ctx, sub)
+  if ctx == 'main' then
+    return config.global.sources or {}, nil
+  elseif ctx == 'cmdline' then
+    sub = sub or ':'
+    local cfg = config.cmdline[sub]
+    if not cfg then
+      local keys = vim.tbl_keys(config.cmdline)
+      table.sort(keys)
+      sub = keys[1]
+      cfg = sub and config.cmdline[sub] or nil
+    end
+    return cfg and (cfg.sources or {}) or {}, sub
+  elseif ctx == 'filetype' then
+    sub = sub or vim.bo[0].filetype
+    local cfg = config.filetypes[sub]
+    return cfg and (cfg.sources or {}) or {}, sub
+  end
+  error(('cmp.query: unknown context `%s`'):format(tostring(ctx)))
+end
+
+---Build a synthetic cmp.Context for a query string. The context reports
+---reason = Manual so source.complete always emits an Invoked completion
+---request, regardless of trigger characters / keyword length.
+---@param query string
+---@param filetype string
+---@return cmp.Context
+local function build_query_context(query, filetype)
+  local ctx = setmetatable({}, { __index = context })
+  ctx.id = misc.id('cmp.query.context')
+  ctx.cache = require('cmp.utils.cache').new()
+  ctx.prev_context = context.empty()
+  ctx.option = { reason = types.cmp.ContextReason.Manual }
+  ctx.filetype = filetype or vim.bo[0].filetype
+  ctx.time = vim.uv.now()
+  ctx.bufnr = vim.api.nvim_get_current_buf()
+  ctx.cursor_line = query
+  ctx.cursor = {
+    row = 1,
+    col = #query + 1,
+    line = 0,
+  }
+  ctx.cursor.character = misc.to_utfindex(query, ctx.cursor.col)
+  ctx.cursor_before_line = query
+  ctx.cursor_after_line = ''
+  ctx.aborted = false
+  return ctx
+end
+
+local STATUS_LABELS = {
+  [source.SourceStatus.WAITING] = 'WAITING',
+  [source.SourceStatus.FETCHING] = 'FETCHING',
+  [source.SourceStatus.COMPLETED] = 'COMPLETED',
+}
+
+local TRIGGER_LABELS = {
+  [1] = 'Invoked',
+  [2] = 'TriggerCharacter',
+  [3] = 'TriggerForIncompleteCompletions',
+}
+
+---Run each configured source against `query` in the requested context and
+---collect timing + result data. The callback fires once all sources have
+---responded or `opts.timeout` (default 2000ms) elapses.
+---@param opts { context: 'main'|'cmdline'|'filetype', query: string, sub?: string, timeout?: integer, filetype?: string }
+---@param callback fun(report: cmp.QueryReport)
+cmp.query = function(opts, callback)
+  opts = opts or {}
+  local ctx_name = opts.context or 'main'
+  local query = opts.query or ''
+  local timeout = opts.timeout or 2000
+
+  local sources_list, resolved_sub = resolve_query_sources(ctx_name, opts.sub)
+  local filetype = opts.filetype
+  if ctx_name == 'filetype' then
+    filetype = filetype or resolved_sub
+  end
+
+  local registered_by_name = {}
+  for _, s in pairs(cmp.core.sources) do
+    registered_by_name[s.name] = s
+  end
+
+  local ctx = build_query_context(query, filetype)
+
+  local results = {}
+  local pending = 0
+  local start = vim.uv.now()
+
+  for _, src_config in ipairs(sources_list) do
+    local g = src_config.group_index or 1
+    local entry_result = {
+      name = src_config.name,
+      group_index = g,
+      label = nil,
+      registered = false,
+      status = 'NOT_REGISTERED',
+      trigger = nil,
+      trigger_character = nil,
+      offset = nil,
+      keyword = nil,
+      time_ms = 0,
+      count = 0,
+      items = {},
+      error = nil,
+    }
+    local s = registered_by_name[src_config.name]
+    if not s then
+      entry_result.error = 'not registered'
+      table.insert(results, entry_result)
+    else
+      entry_result.registered = true
+      pending = pending + 1
+      local s_start = vim.uv.now()
+      local triggered_ok, triggered_err = pcall(function()
+        s:reset()
+        return s:complete(ctx, function()
+          entry_result.time_ms = vim.uv.now() - s_start
+          entry_result.status = STATUS_LABELS[s.status] or 'UNKNOWN'
+          entry_result.offset = s.offset
+          entry_result.keyword = string.sub(query, s.offset or 1)
+          if s.completion_context then
+            entry_result.trigger = TRIGGER_LABELS[s.completion_context.triggerKind]
+            entry_result.trigger_character = s.completion_context.triggerCharacter
+          end
+          entry_result.items = vim.tbl_map(function(e)
+            local item = e.completion_item or {}
+            return {
+              label = item.label,
+              filter_text = item.filterText,
+              insert_text = item.insertText,
+              detail = item.detail,
+              kind = item.kind,
+              documentation = type(item.documentation) == 'table' and item.documentation.value or item.documentation,
+            }
+          end, s.entries or {})
+          entry_result.count = #entry_result.items
+          pending = pending - 1
+        end)
+      end)
+      if not triggered_ok then
+        entry_result.error = tostring(triggered_err)
+        entry_result.status = 'ERROR'
+        pending = pending - 1
+      elseif triggered_err == nil then
+        -- s:complete returned without invoking the source (no callback will fire).
+        entry_result.status = 'NOT_TRIGGERED'
+        entry_result.error = 'completion not triggered'
+        pending = pending - 1
+      end
+      table.insert(results, entry_result)
+    end
+  end
+
+  -- Wait for sources to respond or for the timeout.
+  vim.wait(timeout, function()
+    return pending == 0
+  end, 25)
+
+  local total_time = vim.uv.now() - start
+  local total_count = 0
+  for _, r in ipairs(results) do
+    total_count = total_count + r.count
+  end
+
+  callback({
+    context = ctx_name,
+    sub = resolved_sub,
+    query = query,
+    total_time_ms = total_time,
+    total_count = total_count,
+    timed_out = pending > 0,
+    pending = pending,
+    results = results,
+  })
 end
 
 ---@type cmp.Setup
