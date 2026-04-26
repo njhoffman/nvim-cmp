@@ -742,11 +742,29 @@ view.entries.follow_cursor~
   Specify whether the pmenu should follow the current position of the cursor
   as the user types. Custom view only. `false` by default.
 
+                                          *cmp-config.view.entries.vertical_positioning*
+view.entries.vertical_positioning~
+  `'auto' | 'above' | 'below'`
+
+  Where the entries window is positioned relative to the cursor. `below` by
+  default. Custom view only.
+
+  - `'below'` — open below the cursor; flip above only when there is no room
+    below.
+  - `'above'` — open above the cursor; flip below only when there is no room
+    above.
+  - `'auto'` — open above when the cursor is in the upper half of the
+    screen, below otherwise.
+
                            *cmp-config.window.{completion,documentation}.border*
 window.{completion,documentation}.border~
   `string | string[] | nil`
   Border characters used for the completion popup menu when |experimental.native_menu| is disabled.
   See |nvim_open_win|.
+
+  When this field is omitted, nvim-cmp falls back to the value of
+  |'winborder'| on Neovim 0.11+, and to `'none'` on older versions. An
+  explicit border in this config always wins over `'winborder'`.
 
                      *cmp-config.window.{completion,documentation}.winhighlight*
 window.{completion,documentation}.winhighlight~

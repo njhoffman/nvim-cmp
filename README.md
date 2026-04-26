@@ -5,6 +5,13 @@ Completion sources are installed from external repositories and "sourced".
 
 https://github.com/hrsh7th/nvim-cmp/assets/22756295/afa70011-9121-4e42-aedd-0153b630eeab
 
+Fork notice
+====================
+
+This is [njhoffman/nvim-cmp](https://github.com/njhoffman/nvim-cmp), a fork of [hrsh7th/nvim-cmp](https://github.com/hrsh7th/nvim-cmp).
+On top of upstream `v0.1.0` it carries a small set of maintenance commits: deprecated Neovim API removal, dead-code/unused-utility cleanup, and a fix for docs-view positioning under bottom-up layouts.
+For general usage and configuration, the upstream documentation applies — see the rest of this README and `:h cmp`.
+
 Readme!
 ====================
 
