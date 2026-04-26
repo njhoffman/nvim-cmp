@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.5](https://github.com/njhoffman/nvim-cmp/compare/v0.1.4...v0.1.5) (2026-04-25)
+
+### Bug Fixes
+
+- forward `top_padding` through `cmp.config.window.bordered()`. The helper curates an explicit list of keys it forwards from its `opts` argument; `top_padding` was missing from that list, so values passed via `cmp.config.window.bordered({ top_padding = N })` were silently dropped before the merge.
+
 ## [0.1.4](https://github.com/njhoffman/nvim-cmp/compare/v0.1.3...v0.1.4) (2026-04-25)
 
 ### Features
