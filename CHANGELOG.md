@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.1](https://github.com/njhoffman/nvim-cmp/compare/v0.1.0...v0.1.1) (2026-04-25)
+
+### Bug Fixes
+
+- convert `vim.NIL` in client response items and `itemDefaults` to `nil` ([#2217](https://github.com/hrsh7th/nvim-cmp/issues/2217)) ([3d28a52](https://github.com/hrsh7th/nvim-cmp/commit/3d28a52587567e9b63c804d73bdb0a13d0170b37)), fixes [#2212](https://github.com/hrsh7th/nvim-cmp/issues/2212)
+
+### Chores
+
+- format Lua sources with stylua (CI auto-format)
+
 ## [0.1.0](https://github.com/njhoffman/nvim-cmp/compare/v0.0.2...v0.1.0) (2026-04-25)
 
 This release tracks upstream `hrsh7th/nvim-cmp` `v0.1.0` and adds three
