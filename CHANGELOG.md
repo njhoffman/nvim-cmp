@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2](https://github.com/njhoffman/nvim-cmp/compare/v0.1.1...v0.1.2) (2026-04-25)
+
+### Bug Fixes
+
+- run the `CmdlineEnter` handler synchronously so `cmp.core:prepare()` registers cmdline mappings while `is_cmdline_mode()` still returns true (partial port of upstream [#2214](https://github.com/hrsh7th/nvim-cmp/pull/2214)). The PR's other change (config merge order) was deliberately not applied — it inverts the documented `onetime > cmdline > filetype > buffer > global` priority because `misc.merge` resolves leaf collisions in favor of `tbl1`, not `tbl2`.
+
 ## [0.1.1](https://github.com/njhoffman/nvim-cmp/compare/v0.1.0...v0.1.1) (2026-04-25)
 
 ### Bug Fixes

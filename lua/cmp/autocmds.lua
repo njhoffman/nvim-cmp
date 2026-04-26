@@ -12,7 +12,11 @@ local setup = function(cmp)
       cmp.core:on_change('InsertEnter')
     end
   end
-  autocmd.subscribe({ 'CmdlineEnter', 'InsertEnter' }, async.debounce_next_tick(on_insert_enter))
+  -- CmdlineEnter runs synchronously so cmp.core:prepare() registers cmdline
+  -- mappings while is_cmdline_mode() still returns true; the next-tick defer
+  -- used for InsertEnter loses that window.
+  autocmd.subscribe('CmdlineEnter', on_insert_enter)
+  autocmd.subscribe('InsertEnter', async.debounce_next_tick(on_insert_enter))
 
   local on_text_changed = function()
     if config.enabled() then
