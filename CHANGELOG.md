@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/njhoffman/nvim-cmp/compare/v0.1.8...v0.1.9) (2026-10-20)
+
+
+### Bug Fixes
+
+* use explicit encodings for vim.str_utfindex ([52d75e8](https://github.com/njhoffman/nvim-cmp/commit/52d75e871e8dc00ca7336c34b10cfe5809f5bfd0))
+
 ## [0.1.8](https://github.com/njhoffman/nvim-cmp/compare/v0.1.7...v0.1.8) (2026-04-26)
 
 ### Features
