@@ -77,9 +77,9 @@ local function render(state)
   table.insert(lines, '<CR> toggle expansion · q / <Esc> close')
   table.insert(line_map, nil)
 
-  vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
+  vim.api.nvim_set_option_value('modifiable', true, { buf = state.buf })
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
-  vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
+  vim.api.nvim_set_option_value('modifiable', false, { buf = state.buf })
   state.line_map = line_map
 end
 
@@ -115,8 +115,8 @@ end
 ---@param report cmp.QueryReport
 function query_view.open(report)
   local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-  vim.api.nvim_buf_set_option(buf, 'filetype', 'cmp-query')
+  vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
+  vim.api.nvim_set_option_value('filetype', 'cmp-query', { buf = buf })
 
   local width = math.min(vim.o.columns - 4, 110)
   local height = math.min(vim.o.lines - 4, math.max(8, 5 + #report.results + 4))
@@ -132,8 +132,8 @@ function query_view.open(report)
     title = ' CmpQuery ',
     title_pos = 'center',
   })
-  vim.api.nvim_win_set_option(win, 'cursorline', true)
-  vim.api.nvim_win_set_option(win, 'wrap', false)
+  vim.api.nvim_set_option_value('cursorline', true, { win = win })
+  vim.api.nvim_set_option_value('wrap', false, { win = win })
 
   local state = { buf = buf, win = win, report = report }
   render(state)

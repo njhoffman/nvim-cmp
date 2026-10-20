@@ -1,6 +1,6 @@
 local misc = {}
 
-local islist = vim.islist or vim.tbl_islist
+local islist = vim.islist
 
 ---Create once callback
 ---@param callback function
