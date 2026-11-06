@@ -1,5 +1,4 @@
 local misc = require('cmp.utils.misc')
-local buffer = require('cmp.utils.buffer')
 local api = require('cmp.utils.api')
 
 local keymap = {}
@@ -16,25 +15,13 @@ end
 ---Normalize key sequence.
 ---@param keys string
 ---@return string
-keymap.normalize = vim.fn.has('nvim-0.8') == 1 and function(keys)
-    local t = string.gsub(keys, "<([A-Za-z0-9\\%-%[%]%^@;,:_'`%./]-)>", function(match)
-      -- Use the \<* notation, which distinguishes <C-J> from <NL>, etc.
-      return vim.api.nvim_eval(string.format([["\<*%s>"]], match))
-    end)
-    return vim.fn.keytrans(t)
-  end or function(keys)
-    local normalize_buf = buffer.ensure('cmp.util.keymap.normalize')
-    vim.api.nvim_buf_set_keymap(normalize_buf, 't', keys, '<Plug>(cmp.utils.keymap.normalize)', {})
-    for _, map in ipairs(vim.api.nvim_buf_get_keymap(normalize_buf, 't')) do
-      if keymap.t(map.rhs) == keymap.t('<Plug>(cmp.utils.keymap.normalize)') then
-        vim.api.nvim_buf_del_keymap(normalize_buf, 't', keys)
-        return map.lhs
-      end
-    end
-    vim.api.nvim_buf_del_keymap(normalize_buf, 't', keys)
-    vim.api.nvim_buf_delete(normalize_buf, {})
-    return keys
-  end
+keymap.normalize = function(keys)
+  local t = string.gsub(keys, "<([A-Za-z0-9\\%-%[%]%^@;,:_'`%./]-)>", function(match)
+    -- Use the \<* notation, which distinguishes <C-J> from <NL>, etc.
+    return vim.api.nvim_eval(string.format([["\<*%s>"]], match))
+  end)
+  return vim.fn.keytrans(t)
+end
 
 ---Return vim notation keymapping (simple conversion).
 ---@return string
@@ -263,10 +250,6 @@ keymap.set_map = function(bufnr, mode, lhs, rhs, opts)
     rhs = ''
   end
   opts.desc = 'cmp.utils.keymap.set_map'
-
-  if vim.fn.has('nvim-0.8') == 0 then
-    opts.replace_keycodes = nil
-  end
 
   if bufnr == -1 then
     vim.api.nvim_set_keymap(mode, lhs, rhs, opts)

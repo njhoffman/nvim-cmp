@@ -17,16 +17,8 @@ window.bordered = function(opts)
 end
 
 window.get_border = function()
-  -- On neovim 0.11+, use the vim.o.winborder option by default
-  local has_winborder, winborder = pcall(function()
-    return vim.o.winborder
-  end)
-  if has_winborder and winborder ~= '' then
-    return winborder
-  end
-
-  -- On lower versions return the default
-  return 'none'
+  local winborder = vim.o.winborder
+  return winborder ~= '' and winborder or 'none'
 end
 
 return window

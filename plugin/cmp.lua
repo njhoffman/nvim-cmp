@@ -3,8 +3,8 @@ if vim.g.loaded_cmp then
 end
 vim.g.loaded_cmp = true
 
-if not vim.api.nvim_create_autocmd then
-  return print('[nvim-cmp] Your nvim does not has `nvim_create_autocmd` function. Please update to latest nvim.')
+if vim.fn.has('nvim-0.11') == 0 then
+  return vim.notify('[nvim-cmp] Requires Neovim 0.11 or newer.', vim.log.levels.ERROR)
 end
 
 local api = require('cmp.utils.api')

@@ -1,3 +1,7 @@
+if vim.fn.has('nvim-0.11') == 0 then
+  error('[nvim-cmp] Requires Neovim 0.11 or newer.')
+end
+
 local core = require('cmp.core')
 local source = require('cmp.source')
 local autocmd = require('cmp.utils.autocmd')
