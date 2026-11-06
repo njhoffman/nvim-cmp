@@ -2,6 +2,20 @@ local misc = require('cmp.utils.misc')
 
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/
 ---@class lsp
+local has_nvim_011 = vim.fn.has('nvim-0.11') == 1
+
+---Convert a utf-16 or utf-32 index to a byte index. Indexes past the end clamp to the line length on 0.11+.
+---@param text string
+---@param encoding lsp.PositionEncodingKind
+---@param index integer
+---@return integer
+local function str_byteindex(text, encoding, index)
+  if has_nvim_011 then
+    return vim.str_byteindex(text, encoding, index, false)
+  end
+  return vim.str_byteindex(text, index, encoding == 'utf-16')
+end
+
 local lsp = {}
 
 ---@enum lsp.PositionEncodingKind
@@ -65,7 +79,7 @@ lsp.Position = {
       return position
     end
 
-    local ok, byteindex = pcall(vim.str_byteindex, text, position.character, from_encoding == lsp.PositionEncodingKind.UTF16)
+    local ok, byteindex = pcall(str_byteindex, text, from_encoding, position.character)
     if not ok then
       return position
     end
