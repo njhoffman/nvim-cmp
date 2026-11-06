@@ -6,6 +6,26 @@ local source = require('cmp.source')
 describe('source', function()
   before_each(spec.before)
 
+  it('keeps item data unchanged for completionItem/resolve', function()
+    local state = spec.state('', 1, 1)
+    local data = { value = vim.NIL }
+    local s = source.new('spec', {
+      complete = function(_, _, callback)
+        callback({ { label = 'spec', detail = vim.NIL, data = data } })
+      end,
+    })
+    local done = false
+    s:complete(state.manual(), function()
+      done = true
+    end)
+    vim.wait(200, function()
+      return done
+    end, 5)
+    assert.is_true(done)
+    assert.is_nil(s.entries[1].completion_item.detail)
+    assert.are.equal(vim.NIL, s.entries[1].completion_item.data.value)
+  end)
+
   describe('vim.NIL response', function()
     for name, response in pairs({
       ['items = vim.NIL'] = { items = vim.NIL },

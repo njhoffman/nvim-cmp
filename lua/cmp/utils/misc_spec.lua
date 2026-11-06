@@ -86,6 +86,14 @@ describe('misc', function()
     assert.are.equal(merged.a, nil)
   end)
 
+  it('ensure_nil leaves skipped keys untouched', function()
+    local data = { a = vim.NIL }
+    local ensured = misc.ensure_nil({ label = vim.NIL, data = data }, { data = true })
+    assert.is_nil(ensured.label)
+    assert.are.equal(data, ensured.data)
+    assert.are.equal(vim.NIL, ensured.data.a)
+  end)
+
   it('ensure_nil', function()
     local ensured
     ensured = misc.ensure_nil({ a = {} })
