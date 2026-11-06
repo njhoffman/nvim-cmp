@@ -24,13 +24,15 @@ vim.api.nvim_create_autocmd('VimLeavePre', {
 })
 
 local timer_id
+---@param func function
+---@param delay integer|fun(): integer Milliseconds, or a function read on each call.
 async.debounce = function(func, delay)
   return function(...)
     if timer_id then
       vim.fn.timer_stop(timer_id)
     end
     local args = { ... }
-    timer_id = vim.fn.timer_start(delay, function()
+    timer_id = vim.fn.timer_start(type(delay) == 'function' and delay() or delay, function()
       vim.schedule_wrap(func(unpack(args)))
     end)
   end

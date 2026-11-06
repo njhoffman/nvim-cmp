@@ -616,8 +616,9 @@ cmp.setup = setmetatable({
 }, {
   __call = function(self, c)
     self.global(c)
-    autocmds.setup(cmp)
   end,
 })
+
+autocmds.setup(cmp)
 
 return cmp

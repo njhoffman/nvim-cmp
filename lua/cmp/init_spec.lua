@@ -2,6 +2,23 @@ local cmp = require('cmp')
 local config = require('cmp.config')
 local source = require('cmp.source')
 
+describe('cmp.setup', function()
+  it('subscribes autocmds on load, once', function()
+    local autocmd = require('cmp.utils.autocmd')
+    local before = #autocmd.events.CursorMovedI
+    assert.is.truthy(before > 0)
+    cmp.setup({})
+    cmp.setup({})
+    assert.are.equal(before, #autocmd.events.CursorMovedI)
+  end)
+
+  it('does not stack event handlers', function()
+    local before = #cmp.event.events.confirm_done
+    cmp.setup({})
+    assert.are.equal(before, #cmp.event.events.confirm_done)
+  end)
+end)
+
 describe('cmp.gather_status', function()
   before_each(function()
     config.global = require('cmp.config.default')()

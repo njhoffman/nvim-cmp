@@ -531,6 +531,13 @@ performance.debounce~
   This is the interval used to group up completions from different sources
   for filtering and displaying.
 
+                                        *cmp-config.performance.trigger_debounce*
+performance.trigger_debounce~
+  `number`
+  Milliseconds to wait after the text changes in insert mode before updating
+  completion. Read on each change, so later |cmp.setup| calls and filetype or
+  buffer configs apply.
+
                                                 *cmp-config.performance.throttle*
 performance.throttle~
   `number`

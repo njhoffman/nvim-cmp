@@ -1,6 +1,31 @@
 local async = require('cmp.utils.async')
 
 describe('utils.async', function()
+  it('debounce reads a function delay on each call', function()
+    local delay = 200
+    local calls = 0
+    local debounced = async.debounce(function()
+      calls = calls + 1
+    end, function()
+      return delay
+    end)
+
+    debounced()
+    vim.wait(30)
+    assert.are.equal(0, calls)
+    vim.wait(400, function()
+      return calls == 1
+    end, 5)
+    assert.are.equal(1, calls)
+
+    delay = 0
+    debounced()
+    vim.wait(50, function()
+      return calls == 2
+    end, 5)
+    assert.are.equal(2, calls)
+  end)
+
   it('throttle', function()
     local count = 0
     local now
