@@ -1,6 +1,35 @@
 local async = require('cmp.utils.async')
 
 describe('utils.async', function()
+  it('debounced functions do not cancel each other', function()
+    local calls = { a = 0, b = 0 }
+    local a = async.debounce(function()
+      calls.a = calls.a + 1
+    end, 10)
+    local b = async.debounce(function()
+      calls.b = calls.b + 1
+    end, 10)
+    a()
+    b()
+    vim.wait(200, function()
+      return calls.a == 1 and calls.b == 1
+    end, 5)
+    assert.are.same({ a = 1, b = 1 }, calls)
+  end)
+
+  it('debounce collapses repeated calls and passes the last arguments', function()
+    local received = {}
+    local debounced = async.debounce(function(v)
+      table.insert(received, v)
+    end, 10)
+    debounced(1)
+    debounced(2)
+    vim.wait(200, function()
+      return #received > 0
+    end, 5)
+    assert.are.same({ 2 }, received)
+  end)
+
   it('debounce reads a function delay on each call', function()
     local delay = 200
     local calls = 0
