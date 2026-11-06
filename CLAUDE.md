@@ -63,4 +63,4 @@ External sources implement `complete(params, callback)`. Sources call `callback(
 
 ### Sorting Pipeline
 
-Default comparators in order: offset, exact match, score (from matcher), recently used, locality, kind (LSP CompletionItemKind), length, source order.
+Default comparators in order: offset, exact match, score (from matcher), recently used, locality, kind (LSP CompletionItemKind), sort text, length, source order.

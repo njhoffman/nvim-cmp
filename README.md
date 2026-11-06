@@ -11,6 +11,8 @@ Fork notice
 This is [njhoffman/nvim-cmp](https://github.com/njhoffman/nvim-cmp), a fork of [hrsh7th/nvim-cmp](https://github.com/hrsh7th/nvim-cmp).
 It branched from upstream in 2023 and takes upstream changes selectively; [UPSTREAM.md](UPSTREAM.md) records what has been reviewed. Version numbers are the fork's own and do not correspond to upstream releases.
 
+Requires Neovim 0.11 or newer.
+
 The fork adds:
 
 - `:CmpStatus [main|cmdline|filetype]` with sources in priority order, and `cmp.gather_status()`
@@ -82,13 +84,13 @@ lua <<EOF
 
   cmp.setup({
     snippet = {
-      -- REQUIRED - you must specify a snippet engine
+      -- Optional - defaults to native neovim snippets (vim.snippet)
       expand = function(args)
         vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
         -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
         -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
         -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-        -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
+        -- vim.snippet.expand(args.body) -- For native neovim snippets
 
         -- For `mini.snippets` users:
         -- local insert = MiniSnippets.config.expand.insert or MiniSnippets.default_insert

@@ -33,8 +33,8 @@ return function()
     mapping = {},
 
     snippet = {
-      expand = function(_)
-        error('snippet engine is not configured.')
+      expand = function(args)
+        vim.snippet.expand(args.body)
       end,
     },
 
@@ -74,7 +74,7 @@ return function()
         compare.recently_used,
         compare.locality,
         compare.kind,
-        -- compare.sort_text,
+        compare.sort_text,
         compare.length,
         compare.order,
       },

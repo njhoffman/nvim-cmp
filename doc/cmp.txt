@@ -42,7 +42,9 @@ Usage                                                                *cmp-usage*
 
 A recommended configuration can be found below.
   NOTE:
-    1. You must provide a `snippet.expand` function.
+    0. nvim-cmp requires Neovim 0.11 or newer.
+    1. `snippet.expand` defaults to `vim.snippet.expand`. Set it to use another
+       snippet engine.
     2. `cmp.setup.cmdline` won't work if you use the `native` completion menu.
     3. You can disable the `default` options by specifying `cmp.config.disable` value.
 >vim
@@ -89,7 +91,7 @@ A recommended configuration can be found below.
           -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
           -- require'snippy'.expand_snippet(args.body) -- For `snippy` users.
           -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-          -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
+          -- vim.snippet.expand(args.body) -- For native neovim snippets
 
           -- For `mini.snippets` users:
           -- local insert = MiniSnippets.config.expand.insert or MiniSnippets.default_insert
@@ -590,7 +592,7 @@ mapping~
 snippet.expand~
   `fun(option: cmp.SnippetExpansionParams)`
   The snippet expansion function. That's how nvim-cmp interacts with a
-  particular snippet engine.
+  particular snippet engine. Defaults to `vim.snippet.expand`.
 
                                           *cmp-config.completion.keyword_length*
 completion.keyword_length~
@@ -681,6 +683,8 @@ sorting.comparators~
   `(fun(entry1: cmp.Entry, entry2: cmp.Entry): boolean | nil)[]`
   The function to customize the sorting behavior.
   You can use built-in comparators via `cmp.config.compare.*`.
+  The default order is offset, exact, score, recently_used, locality, kind,
+  sort_text, length, order.
 
                                                             *cmp-config.sources*
 sources~
@@ -824,7 +828,7 @@ window.{completion,documentation}.border~
   See |nvim_open_win|.
 
   When this field is omitted, nvim-cmp falls back to the value of
-  |'winborder'| on Neovim 0.11+, and to `'none'` on older versions. An
+  |'winborder'| when it is set, and to `'none'` otherwise. An
   explicit border in this config always wins over `'winborder'`.
 
                      *cmp-config.window.{completion,documentation}.winhighlight*
