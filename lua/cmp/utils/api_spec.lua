@@ -4,6 +4,24 @@ local feedkeys = require('cmp.utils.feedkeys')
 local api = require('cmp.utils.api')
 
 describe('api', function()
+  describe('apply_text_edits', function()
+    local edit = {
+      range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 1 } },
+      newText = 'x',
+    }
+
+    for _, listed in ipairs({ true, false }) do
+      it('keeps buflisted = ' .. tostring(listed), function()
+        local bufnr = vim.api.nvim_create_buf(listed, true)
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'abc' })
+        api.apply_text_edits({ edit }, bufnr, 'utf-8')
+        assert.are.same({ 'xbc' }, vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
+        assert.are.equal(listed, vim.bo[bufnr].buflisted)
+        vim.api.nvim_buf_delete(bufnr, { force = true })
+      end)
+    end
+  end)
+
   before_each(spec.before)
   describe('get_cursor', function()
     it('insert-mode', function()
