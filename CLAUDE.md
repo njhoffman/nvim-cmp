@@ -47,7 +47,7 @@ vusted --output=gtest ./lua/cmp/utils/misc_spec.lua
 
 ### Async System (`utils/async.lua`)
 
-Custom coroutine scheduler with time budgeting (1us per step). Key primitives:
+Custom coroutine scheduler with time budgeting (1ms per step, `performance.async_budget`). Key primitives:
 - `async.throttle(fn, timeout)` — deferred execution, used for filtering
 - `async.dedup(fn)` — prevents duplicate/stale callbacks, used for source completion
 - `async.wrap(fn)` — converts callback-style to async task

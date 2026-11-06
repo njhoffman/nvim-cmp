@@ -100,7 +100,7 @@ entry._set_completion_item = function(self, completion_item)
   ---Create filter text
   self.filter_text = item.filterText or str.trim(item.label)
 
-  -- TODO: the order below is important
+  -- The order below is important.
   if item.textEdit then
     self.insert_range = self:convert_range_encoding(item.textEdit.insert or item.textEdit.range)
     self.replace_range = self:convert_range_encoding(item.textEdit.replace or item.textEdit.range)

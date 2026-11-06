@@ -284,7 +284,7 @@ lsp.CompletionItemKind = misc.tbl_add_reverse_lookup(lsp.CompletionItemKind)
 ---@field public data? any
 ---@field public cmp? lsp.internal.CmpCompletionExtension
 ---
----TODO: Should send the issue for upstream?
+---nvim-cmp extensions, not part of the LSP specification.
 ---@field public word string|nil
 ---@field public dup boolean|nil
 
