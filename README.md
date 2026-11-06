@@ -9,7 +9,16 @@ Fork notice
 ====================
 
 This is [njhoffman/nvim-cmp](https://github.com/njhoffman/nvim-cmp), a fork of [hrsh7th/nvim-cmp](https://github.com/hrsh7th/nvim-cmp).
-On top of upstream `v0.1.0` it carries a small set of maintenance commits: deprecated Neovim API removal, dead-code/unused-utility cleanup, and a fix for docs-view positioning under bottom-up layouts.
+It branched from upstream in 2023 and takes upstream changes selectively; [UPSTREAM.md](UPSTREAM.md) records what has been reviewed. Version numbers are the fork's own and do not correspond to upstream releases.
+
+The fork adds:
+
+- `:CmpStatus [main|cmdline|filetype]` with sources in priority order, and `cmp.gather_status()`
+- `:CmpQuery` and `cmp.query()` to probe sources with a query string and see timing and results
+- `:CmpDebugOn` and `:CmpDebugOff` to toggle debug logging
+- `window.{completion,documentation}.top_padding`
+- `performance.trigger_debounce`
+
 For general usage and configuration, the upstream documentation applies — see the rest of this README and `:h cmp`.
 
 Readme!
@@ -43,7 +52,7 @@ Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-buffer'
 Plug 'hrsh7th/cmp-path'
 Plug 'hrsh7th/cmp-cmdline'
-Plug 'hrsh7th/nvim-cmp'
+Plug 'njhoffman/nvim-cmp'
 
 " For vsnip users.
 Plug 'hrsh7th/cmp-vsnip'

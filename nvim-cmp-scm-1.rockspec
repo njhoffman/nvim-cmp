@@ -9,7 +9,7 @@ description = {
   detailed = [[
     A completion engine plugin for neovim written in Lua. Completion sources are installed from external repositories and "sourced".
    ]],
-  homepage = 'https://github.com/hrsh7th/nvim-cmp',
+  homepage = 'https://github.com/njhoffman/nvim-cmp',
   license = 'MIT',
 }
 
@@ -18,7 +18,7 @@ dependencies = {
 }
 
 source = {
-  url = 'git://github.com/hrsh7th/nvim-cmp',
+  url = 'git+https://github.com/njhoffman/nvim-cmp',
 }
 
 build = {
