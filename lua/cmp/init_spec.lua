@@ -20,6 +20,33 @@ describe('cmp.setup', function()
   end)
 end)
 
+describe('cmp.resubscribe', function()
+  it('makes cmp the last receiver of the event', function()
+    local group = vim.api.nvim_create_augroup('cmp_resubscribe_spec', { clear = true })
+    vim.api.nvim_create_autocmd('TextChangedI', { group = group, callback = function() end })
+
+    local last_group = function()
+      local found = vim.api.nvim_get_autocmds({ event = 'TextChangedI' })
+      return found[#found].group
+    end
+    assert.are.equal(group, last_group())
+
+    local autocmd = require('cmp.utils.autocmd')
+    local subscribers = #autocmd.events.TextChangedI
+    cmp.resubscribe({ 'TextChangedI' })
+    assert.are.equal(autocmd.group, last_group())
+    assert.are.equal(subscribers, #autocmd.events.TextChangedI)
+
+    vim.api.nvim_del_augroup_by_id(group)
+  end)
+
+  it('ignores events cmp does not subscribe to', function()
+    local before = #vim.api.nvim_get_autocmds({ group = require('cmp.utils.autocmd').group, event = 'BufWritePost' })
+    cmp.resubscribe({ 'BufWritePost' })
+    assert.are.equal(before, #vim.api.nvim_get_autocmds({ group = require('cmp.utils.autocmd').group, event = 'BufWritePost' }))
+  end)
+end)
+
 describe('cmp.gather_status', function()
   before_each(function()
     config.global = require('cmp.config.default')()

@@ -1,5 +1,6 @@
 local core = require('cmp.core')
 local source = require('cmp.source')
+local autocmd = require('cmp.utils.autocmd')
 local autocmds = require('cmp.autocmds')
 local config = require('cmp.config')
 local context = require('cmp.context')
@@ -599,6 +600,12 @@ cmp.query = function(opts, callback)
     pending = pending,
     results = results,
   })
+end
+
+---Ensures that cmp is the last receiver of the events specified.
+---@param events string[]
+cmp.resubscribe = function(events)
+  autocmd.resubscribe(events)
 end
 
 ---@type cmp.Setup
