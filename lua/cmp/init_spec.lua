@@ -258,6 +258,18 @@ describe('cmp.query', function()
     config.cache:clear()
   end)
 
+  ---Run cmp.query and wait for its report.
+  local function query(opts)
+    local report
+    cmp.query(opts, function(r)
+      report = r
+    end)
+    vim.wait(opts.timeout + 200, function()
+      return report ~= nil
+    end, 5)
+    return report
+  end
+
   ---Register a fake source that synchronously returns the given items.
   local function register_source(name, items)
     local s = source.new(name, {
@@ -285,10 +297,7 @@ describe('cmp.query', function()
       },
     })
 
-    local report
-    cmp.query({ context = 'main', query = 'a', timeout = 1500 }, function(r)
-      report = r
-    end)
+    local report = query({ context = 'main', query = 'a', timeout = 1500 })
 
     assert.is_not_nil(report)
     assert.are.equal('main', report.context)
@@ -328,10 +337,7 @@ describe('cmp.query', function()
     config.set_global({ sources = { { name = 'live' } } })
 
     local revision = live.revision
-    local report
-    cmp.query({ context = 'main', query = 'pri', timeout = 500 }, function(r)
-      report = r
-    end)
+    local report = query({ context = 'main', query = 'pri', timeout = 500 })
 
     assert.are.equal(1, report.results[1].count)
     assert.are.equal(1, calls)
@@ -356,19 +362,60 @@ describe('cmp.query', function()
     local shown = { 'shown' }
     live.entries = shown
 
-    cmp.query({ context = 'main', query = 'q', timeout = 500 }, function() end)
+    query({ context = 'main', query = 'q', timeout = 500 })
 
     assert.are.equal(shown, live.entries)
+  end)
+
+  it('uses the active config for main', function()
+    register_source('global_only', { { label = 'g' } })
+    register_source('buffer_only', { { label = 'b' } })
+    config.set_global({ sources = { { name = 'global_only' } } })
+    config.set_buffer({ sources = { { name = 'buffer_only' } } }, vim.api.nvim_get_current_buf())
+
+    local report = query({ context = 'main', query = 'b', timeout = 500 })
+    config.buffers = {}
+    config.cache:clear()
+
+    assert.are.equal(1, #report.results)
+    assert.are.equal('buffer_only', report.results[1].name)
+  end)
+
+  it('does not block and reports a timeout when a source never responds', function()
+    local s = source.new('silent', { complete = function() end })
+    cmp.core.sources[s.id] = s
+    config.set_global({ sources = { { name = 'silent' } } })
+
+    local report
+    cmp.query({ context = 'main', query = 'a', timeout = 50 }, function(r)
+      report = r
+    end)
+    assert.is_nil(report)
+
+    vim.wait(500, function()
+      return report ~= nil
+    end, 5)
+    assert.is_true(report.timed_out)
+    assert.are.equal(1, report.pending)
+  end)
+
+  it('queries the requested cmdtype', function()
+    register_source('search', { { label = 'help' } })
+    register_source('cmd', { { label = 'help' } })
+    config.set_cmdline({ sources = { { name = 'cmd' } } }, ':')
+    config.set_cmdline({ sources = { { name = 'search' } } }, '/')
+
+    local report = query({ context = 'cmdline', sub = '/', query = 'h', timeout = 500 })
+
+    assert.are.equal('/', report.sub)
+    assert.are.equal('search', report.results[1].name)
   end)
 
   it('flags configured sources that are not registered', function()
     register_source('lsp', { { label = 'foo' } })
     config.set_global({ sources = { { name = 'lsp' }, { name = 'ghost' } } })
 
-    local report
-    cmp.query({ context = 'main', query = 'f', timeout = 500 }, function(r)
-      report = r
-    end)
+    local report = query({ context = 'main', query = 'f', timeout = 500 })
 
     local by_name = {}
     for _, r in ipairs(report.results) do
@@ -385,10 +432,7 @@ describe('cmp.query', function()
     register_source('cmd', { { label = 'help' } })
     config.set_cmdline({ sources = { { name = 'cmd' } } }, ':')
 
-    local report
-    cmp.query({ context = 'cmdline', query = 'h', timeout = 500 }, function(r)
-      report = r
-    end)
+    local report = query({ context = 'cmdline', query = 'h', timeout = 500 })
 
     assert.are.equal('cmdline', report.context)
     assert.are.equal(':', report.sub)

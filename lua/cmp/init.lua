@@ -279,7 +279,7 @@ end)
 ---buckets the original `cmp.status` produced. For `cmdline` / `filetype`,
 ---returns one scope per registered cmdtype / filetype, listing its configured
 ---sources and flagging any that aren't registered.
----@param context 'main'|'cmdline'|'filetype'|nil
+---@param scope 'main'|'cmdline'|'filetype'|nil
 ---@return { label: string, available: string[], unavailable: string[], installed: string[], invalid: string[] }[]
 cmp.gather_status = function(scope)
   scope = scope or 'main'
@@ -429,7 +429,7 @@ end
 ---@return table[] sources_list, string|nil resolved_sub
 local function resolve_query_sources(ctx, sub)
   if ctx == 'main' then
-    return config.global.sources or {}, nil
+    return config.get().sources or {}, nil
   elseif ctx == 'cmdline' then
     sub = sub or ':'
     local cfg = config.cmdline[sub]
@@ -490,7 +490,8 @@ local TRIGGER_LABELS = {
 
 ---Run each configured source against `query` in the requested context and
 ---collect timing + result data. The callback fires once all sources have
----responded or `opts.timeout` (default 2000ms) elapses.
+---responded or `opts.timeout` (default 2000ms) elapses, without blocking the editor.
+---Counts are what each source returned, before filtering against `query`.
 ---@param opts { context: 'main'|'cmdline'|'filetype', query: string, sub?: string, timeout?: integer, filetype?: string }
 ---@param callback fun(report: cmp.QueryReport)
 cmp.query = function(opts, callback)
@@ -515,6 +516,28 @@ cmp.query = function(opts, callback)
   local results = {}
   local pending = 0
   local start = vim.uv.now()
+  local finished = false
+
+  local finish = function()
+    if finished then
+      return
+    end
+    finished = true
+    local total_count = 0
+    for _, r in ipairs(results) do
+      total_count = total_count + r.count
+    end
+    callback({
+      context = ctx_name,
+      sub = resolved_sub,
+      query = query,
+      total_time_ms = vim.uv.now() - start,
+      total_count = total_count,
+      timed_out = pending > 0,
+      pending = pending,
+      results = results,
+    })
+  end
 
   for _, src_config in ipairs(sources_list) do
     local g = src_config.group_index or 1
@@ -546,6 +569,9 @@ cmp.query = function(opts, callback)
       local s_start = vim.uv.now()
       local triggered_ok, triggered_err = pcall(function()
         return s:complete(ctx, function()
+          if finished then
+            return
+          end
           entry_result.time_ms = vim.uv.now() - s_start
           entry_result.status = STATUS_LABELS[s.status] or 'UNKNOWN'
           entry_result.offset = s.offset
@@ -567,6 +593,9 @@ cmp.query = function(opts, callback)
           end, s.entries or {})
           entry_result.count = #entry_result.items
           pending = pending - 1
+          if pending == 0 then
+            finish()
+          end
         end)
       end)
       if not triggered_ok then
@@ -583,27 +612,11 @@ cmp.query = function(opts, callback)
     end
   end
 
-  -- Wait for sources to respond or for the timeout.
-  vim.wait(timeout, function()
-    return pending == 0
-  end, 25)
-
-  local total_time = vim.uv.now() - start
-  local total_count = 0
-  for _, r in ipairs(results) do
-    total_count = total_count + r.count
+  if pending == 0 then
+    finish()
+  else
+    vim.defer_fn(finish, timeout)
   end
-
-  callback({
-    context = ctx_name,
-    sub = resolved_sub,
-    query = query,
-    total_time_ms = total_time,
-    total_count = total_count,
-    timed_out = pending > 0,
-    pending = pending,
-    results = results,
-  })
 end
 
 ---Ensures that cmp is the last receiver of the events specified.

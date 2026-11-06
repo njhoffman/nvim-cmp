@@ -423,7 +423,7 @@ Command                                                            *cmp-command*
   it is on. Invoking either flips the flag and swaps which command is
   available.
 
-*CmpQuery* {main|cmdline|filetype} {query}
+*CmpQuery* {main|cmdline[:type]|filetype[:name]} {query}
   Probe the configured sources for {context} with a synthetic completion
   request whose `cursor_before_line` is {query}. Each source is invoked with
   reason = Manual (so the request is sent regardless of trigger characters or
@@ -431,7 +431,8 @@ Command                                                            *cmp-command*
 
   Results are shown in a floating popup. Each line lists the source `name G`,
   request status, item count, response time, and trigger info. A summary line
-  reports the aggregate item count and elapsed wall-clock time.
+  reports the aggregate item count and elapsed wall-clock time. Counts are what
+  each source returned, before filtering against {query}.
 
   Keys inside the popup:
   - `<CR>` or `<Tab>` — toggle expansion of the source on the cursor line to
@@ -445,6 +446,8 @@ Command                                                            *cmp-command*
     :CmpQuery main pri
     :CmpQuery cmdline help
     :CmpQuery filetype req
+    :CmpQuery cmdline:/ help
+    :CmpQuery filetype:lua req
 <
 
 

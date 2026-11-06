@@ -22,24 +22,24 @@ vim.api.nvim_set_hl(0, 'CmpItemMenu', { link = 'CmpItemMenuDefault', default = t
 for kind in pairs(types.lsp.CompletionItemKind) do
   if type(kind) == 'string' then
     local name = ('CmpItemKind%s'):format(kind)
-    local icon_hl = name .. "Icon"
+    local icon_hl = name .. 'Icon'
     vim.api.nvim_set_hl(0, name, { link = ('%sDefault'):format(name), default = true })
     vim.api.nvim_set_hl(0, icon_hl, { link = ('%sDefault'):format(icon_hl), default = true })
   end
 end
 
-autocmd.subscribe({'ColorScheme', 'UIEnter'},  function()
+autocmd.subscribe({ 'ColorScheme', 'UIEnter' }, function()
   highlight.inherit('CmpItemAbbrDefault', 'Pmenu', { bg = 'NONE', default = false })
   highlight.inherit('CmpItemAbbrDeprecatedDefault', 'Comment', { bg = 'NONE', default = false })
   highlight.inherit('CmpItemAbbrMatchDefault', 'Pmenu', { bg = 'NONE', default = false })
   highlight.inherit('CmpItemAbbrMatchFuzzyDefault', 'Pmenu', { bg = 'NONE', default = false })
   highlight.inherit('CmpItemKindDefault', 'Special', { bg = 'NONE', default = false })
-  highlight.inherit('CmpItemKindIconDefault', 'Special', {bg = 'NONE', default = false })
+  highlight.inherit('CmpItemKindIconDefault', 'Special', { bg = 'NONE', default = false })
   highlight.inherit('CmpItemMenuDefault', 'Pmenu', { bg = 'NONE', default = false })
   for name in pairs(types.lsp.CompletionItemKind) do
     if type(name) == 'string' then
       vim.api.nvim_set_hl(0, ('CmpItemKind%sDefault'):format(name), { link = 'CmpItemKind', default = false })
-      vim.api.nvim_set_hl(0, ('CmpItemKind%sIconDefault'):format(name), {link = 'CmpItemKindIcon', default = false })
+      vim.api.nvim_set_hl(0, ('CmpItemKind%sIconDefault'):format(name), { link = 'CmpItemKindIcon', default = false })
     end
   end
 end)
@@ -62,7 +62,7 @@ local cmp_status_contexts = { 'main', 'cmdline', 'filetype' }
 vim.api.nvim_create_user_command('CmpStatus', function(opts)
   local context = opts.args ~= '' and opts.args or 'main'
   if not vim.tbl_contains(cmp_status_contexts, context) then
-    vim.notify(("CmpStatus: unknown subcommand `%s` (expected main|cmdline|filetype)"):format(context), vim.log.levels.ERROR)
+    vim.notify(('CmpStatus: unknown subcommand `%s` (expected main|cmdline|filetype)'):format(context), vim.log.levels.ERROR)
     return
   end
   require('cmp').status(context)
@@ -77,16 +77,18 @@ end, {
 vim.api.nvim_create_user_command('CmpQuery', function(opts)
   local args = opts.fargs
   if #args < 2 then
-    vim.notify('CmpQuery: usage `:CmpQuery <main|cmdline|filetype> <query...>`', vim.log.levels.ERROR)
+    vim.notify('CmpQuery: usage `:CmpQuery <main|cmdline[:type]|filetype[:name]> <query...>`', vim.log.levels.ERROR)
     return
   end
-  local context = args[1]
+  -- `cmdline:/` and `filetype:lua` choose a cmdtype or filetype.
+  local context, sub = args[1]:match('^([^:]+):(.+)$')
+  context = context or args[1]
   if not vim.tbl_contains(cmp_status_contexts, context) then
-    vim.notify(("CmpQuery: unknown context `%s` (expected main|cmdline|filetype)"):format(context), vim.log.levels.ERROR)
+    vim.notify(('CmpQuery: unknown context `%s` (expected main|cmdline|filetype)'):format(context), vim.log.levels.ERROR)
     return
   end
   local query = table.concat(vim.list_slice(args, 2), ' ')
-  require('cmp').query({ context = context, query = query }, function(report)
+  require('cmp').query({ context = context, sub = sub, query = query }, function(report)
     require('cmp.view.query_view').open(report)
   end)
 end, {
