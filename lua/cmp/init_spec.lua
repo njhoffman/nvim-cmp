@@ -20,6 +20,66 @@ describe('cmp.setup', function()
   end)
 end)
 
+describe('text changes', function()
+  local autocmd = require('cmp.utils.autocmd')
+  local enabled, on_change
+  local calls
+
+  before_each(function()
+    enabled, on_change = config.enabled, cmp.core.on_change
+    config.enabled = function()
+      return true
+    end
+    calls = 0
+    cmp.core.on_change = function()
+      calls = calls + 1
+    end
+    config.set_global({ performance = { trigger_debounce = 0 } })
+  end)
+
+  after_each(function()
+    config.enabled, cmp.core.on_change = enabled, on_change
+    config.global = require('cmp.config.default')()
+    config.cache:clear()
+  end)
+
+  ---Emit TextChangedI and return whether it reached cmp.core.on_change.
+  local changed = function()
+    calls = 0
+    autocmd.emit('TextChangedI')
+    vim.wait(50, function()
+      return calls > 0
+    end, 2)
+    return calls > 0
+  end
+
+  it('does not update completion when lines were removed', function()
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three' })
+    changed()
+    vim.api.nvim_buf_set_lines(0, 2, 3, false, {})
+    assert.is_false(changed())
+  end)
+
+  it('updates completion for edits, added lines and the next change after a removal', function()
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three' })
+    changed()
+    vim.api.nvim_buf_set_lines(0, 2, 3, false, {})
+    changed()
+
+    vim.api.nvim_buf_set_lines(0, 0, 1, false, { 'one more' })
+    assert.is_true(changed())
+    vim.api.nvim_buf_set_lines(0, 2, 2, false, { 'pasted' })
+    assert.is_true(changed())
+  end)
+
+  it('does not compare line counts across buffers', function()
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three' })
+    changed()
+    vim.cmd('enew!')
+    assert.is_true(changed())
+  end)
+end)
+
 describe('cmp.resubscribe', function()
   it('makes cmp the last receiver of the event', function()
     local group = vim.api.nvim_create_augroup('cmp_resubscribe_spec', { clear = true })

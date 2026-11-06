@@ -23,12 +23,20 @@ local setup = function(cmp)
       cmp.core:on_change('TextChanged')
     end
   end
-  autocmd.subscribe(
-    { 'TextChangedI', 'TextChangedP' },
-    async.debounce(on_text_changed, function()
-      return config.get().performance.trigger_debounce
-    end)
-  )
+  local debounced_text_changed = async.debounce(on_text_changed, function()
+    return config.get().performance.trigger_debounce
+  end)
+  -- A change that removes lines is not typing, so it should not open the menu at the previous line.
+  local last = { buf = -1, line_count = 0 }
+  autocmd.subscribe({ 'TextChangedI', 'TextChangedP' }, function()
+    local buf = vim.api.nvim_get_current_buf()
+    local line_count = vim.api.nvim_buf_line_count(buf)
+    local removed_lines = buf == last.buf and line_count < last.line_count
+    last.buf, last.line_count = buf, line_count
+    if not removed_lines then
+      debounced_text_changed()
+    end
+  end)
   autocmd.subscribe('CmdlineChanged', async.debounce_next_tick(on_text_changed))
 
   autocmd.subscribe('CursorMovedI', function()
