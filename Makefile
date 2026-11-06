@@ -4,7 +4,7 @@ lint:
 
 .PHONY: format-check
 format-check:
-	stylua --check lua
+	stylua --check lua plugin
 
 .PHONY: test
 test:

@@ -16,7 +16,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: v2.6.0
-          args: ./lua
+          args: ./lua ./plugin
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:

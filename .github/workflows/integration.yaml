@@ -55,4 +55,4 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         version: v2.6.0
-        args: --check ./lua
+        args: --check ./lua ./plugin
