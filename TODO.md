@@ -55,14 +55,14 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
 
 ## 2. Upstream sync
 
-- [ ] **Decide on `compare.sort_text` as a default comparator.** (p2) [feature] Upstream enabled it in 8c82d0b; the fork has it commented out, so LSP `sortText` ordering is ignored by default.
-      Where: `lua/cmp/config/default.lua:77`. Applies cleanly, but changes result ordering for everyone without custom comparators, and `CLAUDE.md` documents the current order. I found no record of whether this was deliberate. Decide, then update the docs if it changes.
+- [x] **Decide on `compare.sort_text` as a default comparator.** (p2) [feature] Upstream enabled it in 8c82d0b; the fork has it commented out, so LSP `sortText` ordering is ignored by default.
+      Where: `lua/cmp/config/default.lua:77`. Applies cleanly, but changes result ordering for everyone without custom comparators, and `CLAUDE.md` documents the current order. I found no record of whether this was deliberate. Decided: enabled, between kind and length as upstream has it, and documented.
 
 - [x] **Port `cmp.resubscribe` for mini.snippets.** (p2) [bug] 1250990 is absent, yet the README's setup example mentions `MiniSnippets` (`README.md:85`), so following it can give outdated completion items.
       Done. The pick applied cleanly but needed an `autocmd` require in `lua/cmp/init.lua`, which the hook caught. The README and `doc/cmp.txt` text was already there and called a function that did not exist.
 
-- [ ] **Default `snippet.expand` to `vim.snippet`.** (p2) [feature] The fork's default still raises "snippet engine is not configured"; upstream uses `vim.snippet` on 0.10+.
-      Where: `lua/cmp/config/default.lua:36`. Port 66f0a03 and 8f3c541 together; 8f3c541 conflicts by hand. Fits with raising the minimum Neovim version (project 3).
+- [x] **Default `snippet.expand` to `vim.snippet`.** (p2) [feature] The fork's default still raises "snippet engine is not configured"; upstream uses `vim.snippet` on 0.10+.
+      Where: `lua/cmp/config/default.lua:36`. Done by hand, with no version check now that the minimum is 0.11.
 
 - [x] **Take the November 2026 perf commits.** (p2) [perf] Four upstream perf changes from 2026-11-05, none yet in the fork.
       Applies cleanly: fe29aba (`char.lua` lookup tables), 0cff98b (`str.oneline`), 9db1d76 (lazy entry cache). Conflicts: e04302f (`view.open` filters each source once); `lua/cmp/view.lua` has the same double `get_entries` call, so it is worth porting by hand.
@@ -72,8 +72,8 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
       Its author's open follow-up #2228 says it discards pastes and other plugins' text changes. From the diff, it only fires on a cursor advance of exactly one byte, so multibyte input is also suppressed. The conflict is with `lua/cmp/autocmds.lua`, which upstream does not have.
       Fix: test whether upstream issue #1303 reproduces under `trigger_debounce` first; if it does, port 2ffe79f and #2228 together. The commit's `docs_view` `row` fix is already in the fork.
 
-- [ ] **Preserve `buflisted` when applying text edits.** (p3) [bug] 1e1900b is absent, but it did not reproduce on the installed Neovim.
-      Where: `lua/cmp/core.lua:435,439,488` call `vim.lsp.util.apply_text_edits` directly. On 0.13-dev an unlisted buffer stays unlisted. Upstream's fix targets older releases, so this only matters for whichever minimum version project 3 picks. Older versions not tested.
+- [x] **Preserve `buflisted` when applying text edits.** (p3) [bug] 1e1900b was absent. It does not reproduce on 0.13-dev, but v0.11.0's `apply_text_edits` forces `buflisted = true`.
+      Where: `lua/cmp/core.lua:435,439,488` call `vim.lsp.util.apply_text_edits` directly. Ported once the minimum became 0.11. The v0.11.0 behaviour was read from its source, and CI covers that version.
 
 - [x] **Record the upstream sync point.** (p2) [chore] The nominal "107 behind" is mostly noise and has to be re-derived each time, because adapted cherry-picks hash differently.
       Apart from the commits named in projects 1 and 2, the review found these already applied or superseded: keymap regexes (`keymap.lua:20` is a superset), `vim.uv` over `vim.loop`, `get_selected_index`, resolve merging, `CmdwinEnter` (`autocmds.lua:39`) and reverse lookup (`misc.tbl_add_reverse_lookup`). c273707 (typos) is applied. 4c1ca82 is already present; cd2cf0c, 2fb2a3c and a70bdcf do not apply cleanly and were not reviewed line by line.
@@ -84,10 +84,10 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
 
 ## 3. Compatibility
 
-- [ ] **Declare a minimum Neovim version and remove dead gates.** (p2) [refactor] The real floor is at least 0.10, but the code and docs imply otherwise.
+- [x] **Declare a minimum Neovim version and remove dead gates.** (p2) [refactor] The real floor is at least 0.10, but the code and docs imply otherwise.
       `vim.uv` is used unconditionally (`utils/async.lua:191` at require time, so older versions fail on load), while gates for 0.8 remain (`utils/keymap.lua:19,267`, `view/custom_entries_view.lua:475`) and `plugin/cmp.lua:6` still checks for `nvim_create_autocmd`.
       `misc.to_vimindex` (`utils/misc.lua:229`) and `types/lsp.lua:89,112` use the 0.11 signature with no gate, while `misc.to_utfindex` has one. By reading, on 0.10 the `pcall` swallows the error and returns wrong indexes silently.
-      Fix: pick a floor (0.11 would remove all of this), state it in the README, fail clearly below it, and test it in CI.
+      Fix: the floor is 0.11. It is stated in the README and `:h cmp`, fails clearly below it, and is tested in CI.
 
 - [ ] **Private API dependency in the docs view.** (p3) [chore] `vim.lsp.util._make_floating_popup_size` can change without notice. Where: `lua/cmp/view/docs_view.lua:82`. It exists on 0.13-dev, and upstream uses it too. Consider a small local implementation if it ever breaks.
 
@@ -99,16 +99,16 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
       `init.sh` has no shebang, uses the same `BASH_SOURCE`, and runs `rm .git/hooks/*`.
       Fix: uses `git rev-parse --show-toplevel` and `set -e`, drops the `git add` loop, and `init.sh` now sets `core.hooksPath` instead of copying. Tested with real commits in a scratch clone. Run `./init.sh` to enable it in a clone.
 
-- [ ] **Resolve the release flow and CHANGELOG format.** (p2) [chore] release-please's generated format conflicts with the project's Keep a Changelog convention, and unreleased changes are not recorded.
+- [x] **Resolve the release flow and CHANGELOG format.** (p2) [chore] release-please's generated format conflicts with the project's Keep a Changelog convention, and unreleased changes are not recorded.
       `CHANGELOG.md` has no `[Unreleased]` section and is mixed hand and generated text. Neither 5457e71 nor 52d75e8 is in it on `main`. The unmerged `origin/release-please--branches--main` (0.1.9) lists only 52d75e8, because release-please leaves `refactor:` commits out of its notes, so the deprecated API work in 5457e71 is unrecorded everywhere. There is no `VERSION` or `version.txt`, although `release-type: simple` normally tracks `version.txt`.
-      Decide: keep release-please and accept its format, or remove the workflow and maintain `CHANGELOG.md` and `VERSION` by hand with `vX.Y.Z` tags. Removing it fits the versioning convention better. Either way, deal with the pending 0.1.9 branch.
+      Decided: removed the workflow; `CHANGELOG.md` and `VERSION` are maintained by hand with `vX.Y.Z` tags. Older entries keep their original format. The pending PR #1 and its branch `release-please--branches--main` still need closing on GitHub.
 
-- [ ] **Modernize CI.** (p2) [chore] CI only tests nightly, so the compatibility gates and any stable-release break go unnoticed.
+- [x] **Modernize CI.** (p2) [chore] CI only tests nightly, so the compatibility gates and any stable-release break go unnoticed.
       Where: `.github/workflows/integration.yaml` (`checkout@v2`), `format.yaml` (`checkout@v3`, stylua v0.16.1).
-      Fix: add a matrix of stable, nightly and the declared minimum, and bump actions and stylua. Add a `stylua --check` step.
+      Fix: added a matrix of v0.11.0, stable and nightly, bumped actions and stylua, and added a format check job.
 
-- [ ] **Formatting has drifted.** (p3) [chore] Since auto-format was turned off in ce3f840, nothing enforces it.
-      `stylua --check lua` reports `lua/cmp/utils/keymap.lua`; `plugin/cmp.lua` also has inconsistent quoting and spacing but is outside the workflow's `./lua` path. Reformat in a separate commit, and add `make format-check`.
+- [x] **Formatting has drifted.** (p3) [chore] Since auto-format was turned off in ce3f840, nothing enforces it.
+      `lua/` is clean and CI now checks it, with `make format-check` locally. `plugin/cmp.lua` is still outside that path and has inconsistent quoting and spacing.
 
 - [ ] **Remove stale pull-request remotes.** (p3) [chore] All six have since merged upstream, so they only slow down `git fetch` and clutter branch listings.
       `pull-1420` (82ba05c), `pull-1677` (5e1fa02), `pull-1688` (0b751f6), `pull-1689` (55734c8), `pull-1701` (5124cdd), `pull-1723` (c01a038). `pull-1701/feat/always_indicate_snippets` is unmerged upstream, but the fork already has it as 66d6057. Remove with `git remote remove`.

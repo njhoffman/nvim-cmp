@@ -8,10 +8,7 @@ Last reviewed upstream commit: `fe29aba` (2026-11-05). To see what is new: `git 
 
 | Upstream | Change | Why not |
 | --- | --- | --- |
-| `8c82d0b` | Enable `compare.sort_text` by default | Changes result order; undecided, see TODO.md |
-| `66f0a03`, `8f3c541` | Default `snippet.expand` to `vim.snippet` | Tied to choosing a minimum Neovim version; see TODO.md |
 | `2ffe79f` | TextChanged only updates on added text | Drops pastes and multibyte input (open follow-up PR #2228); the fork has `trigger_debounce` instead |
-| `1e1900b` | Preserve `buflisted` in text edits | Does not reproduce on 0.13-dev; depends on the minimum version |
 | `cd2cf0c`, `2fb2a3c`, `a70bdcf` | README and doc edits | Do not apply cleanly; not reviewed line by line |
 
 ## Superseded in the fork

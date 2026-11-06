@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-06
+
+### Changed
+
+- **Breaking:** requires Neovim 0.11 or newer, and reports a clear error on older versions.
+- **Breaking:** `compare.sort_text` is now a default comparator, so LSP `sortText` affects result order unless you set your own `sorting.comparators`.
+- `snippet.expand` now defaults to `vim.snippet.expand` instead of raising an error.
+- CI tests Neovim 0.11.0, stable and nightly, and checks formatting. `make format-check` runs the same check locally.
+
+### Fixed
+
+- Applying completion text edits no longer marks an unlisted buffer as listed on Neovim 0.11.
+
+### Removed
+
+- The release-please workflow. Versions and this changelog are now maintained by hand, with annotated tags.
+
 ## [0.2.0] - 2026-11-06
 
 ### Added
