@@ -1,6 +1,7 @@
 local cmp = require('cmp')
 local config = require('cmp.config')
 local source = require('cmp.source')
+local spec = require('cmp.utils.spec')
 
 describe('cmp.setup', function()
   it('subscribes autocmds on load, once', function()
@@ -225,6 +226,52 @@ describe('cmp.query', function()
 
     assert.are.equal(3, report.total_count)
     assert.is_true(report.total_time_ms >= 0)
+  end)
+
+  it('does not change the state of registered sources', function()
+    spec.before()
+    local calls = 0
+    local live = source.new('live', {
+      complete = function(_, _, callback)
+        calls = calls + 1
+        callback({ { label = 'prior_item' } })
+      end,
+    })
+    cmp.core.sources[live.id] = live
+    config.set_global({ sources = { { name = 'live' } } })
+
+    local revision = live.revision
+    local report
+    cmp.query({ context = 'main', query = 'pri', timeout = 500 }, function(r)
+      report = r
+    end)
+
+    assert.are.equal(1, report.results[1].count)
+    assert.are.equal(1, calls)
+    assert.are.equal(source.SourceStatus.WAITING, live.status)
+    assert.are.equal(0, #live.entries)
+    assert.are.equal(-1, live.request_offset)
+    assert.are.equal(revision, live.revision)
+
+    -- A real completion at the same offset still reaches the source.
+    assert.is.truthy(live:complete(spec.state('', 1, 1).input('x'), function() end))
+    assert.are.equal(2, calls)
+  end)
+
+  it('keeps the entries of a menu that is already open', function()
+    local live = source.new('live', {
+      complete = function(_, _, callback)
+        callback({ { label = 'query_item' } })
+      end,
+    })
+    cmp.core.sources[live.id] = live
+    config.set_global({ sources = { { name = 'live' } } })
+    local shown = { 'shown' }
+    live.entries = shown
+
+    cmp.query({ context = 'main', query = 'q', timeout = 500 }, function() end)
+
+    assert.are.equal(shown, live.entries)
   end)
 
   it('flags configured sources that are not registered', function()

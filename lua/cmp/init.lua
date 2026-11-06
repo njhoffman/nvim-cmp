@@ -528,16 +528,18 @@ cmp.query = function(opts, callback)
       items = {},
       error = nil,
     }
-    local s = registered_by_name[src_config.name]
-    if not s then
+    local registered = registered_by_name[src_config.name]
+    if not registered then
       entry_result.error = 'not registered'
       table.insert(results, entry_result)
     else
       entry_result.registered = true
       pending = pending + 1
+      -- Probe through a separate wrapper: the registered source holds live
+      -- completion state that a synthetic context must not touch.
+      local s = source.new(registered.name, registered.source)
       local s_start = vim.uv.now()
       local triggered_ok, triggered_err = pcall(function()
-        s:reset()
         return s:complete(ctx, function()
           entry_result.time_ms = vim.uv.now() - s_start
           entry_result.status = STATUS_LABELS[s.status] or 'UNKNOWN'
