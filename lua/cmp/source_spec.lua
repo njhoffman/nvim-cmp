@@ -6,6 +6,32 @@ local source = require('cmp.source')
 describe('source', function()
   before_each(spec.before)
 
+  describe('vim.NIL response', function()
+    for name, response in pairs({
+      ['items = vim.NIL'] = { items = vim.NIL },
+      ['response = vim.NIL'] = vim.NIL,
+    }) do
+      it('finishes when ' .. name, function()
+        local state = spec.state('', 1, 1)
+        local s = source.new('spec', {
+          complete = function(_, _, callback)
+            callback(response)
+          end,
+        })
+        local done = false
+        s:complete(state.manual(), function()
+          done = true
+        end)
+        vim.wait(200, function()
+          return done
+        end, 5)
+        assert.is_true(done)
+        assert.are.equal(source.SourceStatus.WAITING, s.status)
+        assert.are.equal(0, #s.entries)
+      end)
+    end
+  end)
+
   describe('keyword length', function()
     it('not enough', function()
       config.set_buffer({

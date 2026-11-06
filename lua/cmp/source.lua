@@ -346,15 +346,15 @@ source.complete = function(self, ctx, callback)
         return
       end
       ---@type lsp.CompletionResponse
-      response = response or {}
+      -- vim.NIL is what a JSON null decodes to: truthy, but with no fields or length.
+      response = (response ~= vim.NIL and response) or {}
       self.response = response
 
       self.incomplete = response.isIncomplete or false
 
-      if #(response.items or response) > 0 then
-        local res = #(response.items or response)
-
-        debug.log_retrieval(self, res)
+      local items = response.items or response
+      if type(items) ~= 'userdata' and #items > 0 then
+        debug.log_retrieval(self, #items)
         local old_offset = self.offset
         local old_entries = self.entries
 
