@@ -42,6 +42,15 @@ describe('matcher', function()
     assert.is.truthy(matcher.match('emg', 'error_msg', config.matching) >= 1)
     assert.is.truthy(matcher.match('sasr', 'saved_splitright', config.matching) >= 1)
 
+    -- #1420: every reported match must be a real match inside the word.
+    for _, case in ipairs({ { 'asset_', 'asset_path' }, { 'asset_', 'assert_equal' }, { 'tail', 'HCDetails' }, { 'emg', 'error_msg' } }) do
+      local _, ranges = matcher.match(case[1], case[2], config.matching)
+      for _, m in ipairs(ranges or {}) do
+        assert.is.truthy(m.word_match_start >= 1 and m.word_match_end <= #case[2])
+        assert.is.truthy(m.word_match_start <= m.word_match_end)
+      end
+    end
+
     local score, matches
     score, matches = matcher.match('tail', 'HCDetails', {
       disallow_fuzzy_matching = false,
