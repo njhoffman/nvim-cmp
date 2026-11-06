@@ -35,10 +35,13 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
       Where: `lua/cmp/utils/async.lua:26-37`. `timer_id` is module-level, which is harmless while `autocmds.lua` is the only caller. `vim.schedule_wrap(func(unpack(args)))` calls `func` immediately and wraps its return value, so the wrapper is never used.
       Fix: move `timer_id` into the closure and call `func` directly from the timer callback.
 
-- [ ] **Finish the `vim.str_byteindex` migration.** (p2) [bug] `to_utf8` still uses the legacy signature, on the default UTF-16 path. Reproduced (`vim.deprecate` fires).
+- [x] **Finish the `vim.str_byteindex` migration.** (p2) [bug] `to_utf8` still uses the legacy signature, on the default UTF-16 path. Reproduced (`vim.deprecate` fires).
       Where: `lua/cmp/types/lsp.lua:68`, missed by 52d75e8.
       Risk: the legacy form is scheduled for removal in Neovim 1.0. The call sits inside `pcall`, whose failure branch returns the position unconverted, so removal would silently produce wrong columns on multibyte lines instead of an error.
-      Fix: use `vim.str_byteindex(text, encoding, index, false)` and add a multibyte case to `lua/cmp/types/lsp_spec.lua`.
+      Fix: uses the new signature on 0.11+ and keeps the old one on 0.10 until a minimum version is chosen. Specs in `lua/cmp/types/lsp_spec.lua`.
+
+- [x] **`:CmpQuery` popup ignores keys on source rows.** (p2) [bug] `table.insert(line_map, nil)` is a no-op, so `line_map` was offset from the buffer. Found while writing view specs.
+      Where: `lua/cmp/view/query_view.lua`. Reproduced: the cursor parked on the summary line and `<CR>` did nothing on a source row. Fixed, with `lua/cmp/view/query_view_spec.lua`.
 
 - [ ] **`:CmpQuery` differs from `:CmpStatus` and blocks the UI.** (p3) [bug] `main` ignores buffer config, and the callback-style API is actually synchronous.
       Where: `resolve_query_sources` reads `config.global.sources`, while `:CmpStatus main` reflects the active config. `cmp.query` spins in `vim.wait` for up to `timeout` (2s by default) on the main loop.
@@ -55,15 +58,15 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
 - [ ] **Decide on `compare.sort_text` as a default comparator.** (p2) [feature] Upstream enabled it in 8c82d0b; the fork has it commented out, so LSP `sortText` ordering is ignored by default.
       Where: `lua/cmp/config/default.lua:77`. Applies cleanly, but changes result ordering for everyone without custom comparators, and `CLAUDE.md` documents the current order. I found no record of whether this was deliberate. Decide, then update the docs if it changes.
 
-- [ ] **Port `cmp.resubscribe` for mini.snippets.** (p2) [bug] 1250990 is absent, yet the README's setup example mentions `MiniSnippets` (`README.md:85`), so following it can give outdated completion items.
-      Applies cleanly, and touches `lua/cmp/init.lua`, `lua/cmp/utils/autocmd.lua`, `README.md` and `doc/cmp.txt`. Do it after the `cmp.setup` autocmd fix in project 1, since both touch subscription order.
+- [x] **Port `cmp.resubscribe` for mini.snippets.** (p2) [bug] 1250990 is absent, yet the README's setup example mentions `MiniSnippets` (`README.md:85`), so following it can give outdated completion items.
+      Done. The pick applied cleanly but needed an `autocmd` require in `lua/cmp/init.lua`, which the hook caught. The README and `doc/cmp.txt` text was already there and called a function that did not exist.
 
 - [ ] **Default `snippet.expand` to `vim.snippet`.** (p2) [feature] The fork's default still raises "snippet engine is not configured"; upstream uses `vim.snippet` on 0.10+.
       Where: `lua/cmp/config/default.lua:36`. Port 66f0a03 and 8f3c541 together; 8f3c541 conflicts by hand. Fits with raising the minimum Neovim version (project 3).
 
-- [ ] **Take the November 2026 perf commits.** (p2) [perf] Four upstream perf changes from 2026-11-05, none yet in the fork.
+- [x] **Take the November 2026 perf commits.** (p2) [perf] Four upstream perf changes from 2026-11-05, none yet in the fork.
       Applies cleanly: fe29aba (`char.lua` lookup tables), 0cff98b (`str.oneline`), 9db1d76 (lazy entry cache). Conflicts: e04302f (`view.open` filters each source once); `lua/cmp/view.lua` has the same double `get_entries` call, so it is worth porting by hand.
-      Open upstream PRs #2243 and #2244 (`ensure_nil`) are in the same area, and the fork calls `ensure_nil` per item. Not benchmarked here.
+      Done, not benchmarked. Open upstream PRs #2243 and #2244 (`ensure_nil`) moved to the watch list.
 
 - [ ] **Do not cherry-pick 2ffe79f (TextChanged only on text added) by itself.** (p2) [chore] It has known regressions, and it overlaps with the fork's debounce.
       Its author's open follow-up #2228 says it discards pastes and other plugins' text changes. From the diff, it only fires on a cursor advance of exactly one byte, so multibyte input is also suppressed. The conflict is with `lua/cmp/autocmds.lua`, which upstream does not have.
@@ -72,12 +75,12 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
 - [ ] **Preserve `buflisted` when applying text edits.** (p3) [bug] 1e1900b is absent, but it did not reproduce on the installed Neovim.
       Where: `lua/cmp/core.lua:435,439,488` call `vim.lsp.util.apply_text_edits` directly. On 0.13-dev an unlisted buffer stays unlisted. Upstream's fix targets older releases, so this only matters for whichever minimum version project 3 picks. Older versions not tested.
 
-- [ ] **Record the upstream sync point.** (p2) [chore] The nominal "107 behind" is mostly noise and has to be re-derived each time, because adapted cherry-picks hash differently.
-      Apart from the commits named in projects 1 and 2, the review found these already applied or superseded: keymap regexes (`keymap.lua:20` is a superset), `vim.uv` over `vim.loop`, `get_selected_index`, resolve merging, `CmdwinEnter` (`autocmds.lua:39`) and reverse lookup (`misc.tbl_add_reverse_lookup`). Still left: c273707 (typo fixes, applies cleanly). Not checked: changes outside Lua, such as the doc-only commits 4c1ca82, cd2cf0c, 2fb2a3c and a70bdcf.
-      Proposal: keep the last-reviewed upstream hash (now fe29aba) and a skip list with reasons in a small `UPSTREAM.md`, so the next scan only reads new commits. A line-matching script needs comments stripped: it scored 8c82d0b as 100% applied because of the commented-out line.
+- [x] **Record the upstream sync point.** (p2) [chore] The nominal "107 behind" is mostly noise and has to be re-derived each time, because adapted cherry-picks hash differently.
+      Apart from the commits named in projects 1 and 2, the review found these already applied or superseded: keymap regexes (`keymap.lua:20` is a superset), `vim.uv` over `vim.loop`, `get_selected_index`, resolve merging, `CmdwinEnter` (`autocmds.lua:39`) and reverse lookup (`misc.tbl_add_reverse_lookup`). c273707 (typos) is applied. 4c1ca82 is already present; cd2cf0c, 2fb2a3c and a70bdcf do not apply cleanly and were not reviewed line by line.
+      Done: `UPSTREAM.md` keeps the last-reviewed hash (fe29aba) and a skip list with reasons, so the next scan only reads new commits. A line-matching script needs comments stripped: it scored 8c82d0b as 100% applied because of the commented-out line.
 
 - [ ] **Watch open upstream PRs.** (p3) [chore] Possibly useful, judged by title only (not reviewed).
-      #2177 feedkeys inserting text into the buffer, #2234 and #2235 menu position and anchoring, #2231 mapping fallbacks losing abbreviations, #2165 redundant `UIEnter` subscription (`plugin/cmp.lua:31`), #2032 docs height with wrapped lines, #2230 `PreselectMode` type.
+      #2177 feedkeys inserting text into the buffer, #2234 and #2235 menu position and anchoring, #2231 mapping fallbacks losing abbreviations, #2165 redundant `UIEnter` subscription (`plugin/cmp.lua:31`), #2032 docs height with wrapped lines, #2230 `PreselectMode` type, #2243 and #2244 `ensure_nil` perf.
 
 ## 3. Compatibility
 
@@ -105,7 +108,7 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
       Fix: add a matrix of stable, nightly and the declared minimum, and bump actions and stylua. Add a `stylua --check` step.
 
 - [ ] **Formatting has drifted.** (p3) [chore] Since auto-format was turned off in ce3f840, nothing enforces it.
-      `stylua --check lua` reports `lua/cmp/utils/keymap.lua` and `lua/cmp/view/query_view.lua`; `plugin/cmp.lua` also has inconsistent quoting and spacing but is outside the workflow's `./lua` path. Reformat in a separate commit, and add `make format-check`.
+      `stylua --check lua` reports `lua/cmp/utils/keymap.lua`; `plugin/cmp.lua` also has inconsistent quoting and spacing but is outside the workflow's `./lua` path. Reformat in a separate commit, and add `make format-check`.
 
 - [ ] **Remove stale pull-request remotes.** (p3) [chore] All six have since merged upstream, so they only slow down `git fetch` and clutter branch listings.
       `pull-1420` (82ba05c), `pull-1677` (5e1fa02), `pull-1688` (0b751f6), `pull-1689` (55734c8), `pull-1701` (5124cdd), `pull-1723` (c01a038). `pull-1701/feat/always_indicate_snippets` is unmerged upstream, but the fork already has it as 66d6057. Remove with `git remote remove`.
@@ -113,17 +116,18 @@ Baseline at review: `make test` 83/83 passing and `luacheck` clean on NVIM v0.13
 ## 5. Tests
 
 - [ ] **Add view-layer specs.** (p2) [test] `lua/cmp/view/` has no specs, and that is where the fork's custom features live; the icon bug in project 1 went through this gap.
-      Cover: column widths for each `formatting.fields` set, `vertical_positioning` for all three values, `top_padding` in both directions, `col_offset`, `query_view` render and expand, and the `formatting.expandable_indicator` snippet marker. The probe specs for this review show a working setup: `spec.state()` plus `entry.new(state.manual(), state.source(), item)`.
+      Done: column widths, `vertical_positioning`, `top_padding` on the completion menu, `query_view`, and the `expandable_indicator` marker.
+      Still to do: `lua/cmp/view/docs_view.lua` (`col_offset`, `top_padding`), `native_entries_view`, `wildmenu_entries_view` and `ghost_text_view`.
 
 - [ ] **Add regression specs alongside the fixes above.** (p2) [test] Each p1 bug in project 1 needs a spec with its fix. Repeated `cmp.setup`, `vim.NIL` responses and `cmp.query` state isolation are done.
       Also add `lua/cmp/config/compare.lua` and `lua/cmp/utils/window.lua`, which have no direct spec today, and take upstream's fuzzy matcher placeholder from 36eb3a6 (`#1420`) as a real test case.
 
 ## 6. Documentation
 
-- [ ] **README and rockspec still describe upstream.** (p2) [docs] Install instructions and metadata point away from this fork.
+- [x] **README and rockspec still describe upstream.** (p2) [docs] Install instructions and metadata point away from this fork.
       `README.md:46` and `doc/cmp.txt:55` use `Plug 'hrsh7th/nvim-cmp'`; `nvim-cmp-scm-1.rockspec` has hrsh7th for `homepage` and `source`.
       The fork notice (`README.md:12`) says "on top of upstream `v0.1.0`" with a small set of maintenance commits. In fact the fork branched in 2023 and adds its own features (`top_padding`, `:CmpStatus` contexts, `:CmpQuery`, `:CmpDebugOn`), and upstream's own 0.1.0 is still an unmerged release PR (#2211), so the number is also ambiguous.
-      Fix: rewrite the notice with a feature list and the sync status. Consider whether the fork's `v0.1.x` numbering needs distinguishing.
+      Fix: rewrote the notice with a feature list, pointed it at `UPSTREAM.md`, and stated that version numbers are the fork's own. Install examples and the rockspec now point at this fork.
 
 - [ ] **Small comment and doc corrections.** (p3) [docs] Several comments are wrong or stale.
       `CLAUDE.md`: the async budget is "1us per step", but `async_budget = 1` is in ms (`utils/async.lua:194`, `types/cmp.lua:110`).

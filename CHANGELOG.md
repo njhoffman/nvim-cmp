@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-06
+
+### Added
+
+- `cmp.resubscribe(events)` makes cmp the last receiver of the given events. The README and `:h cmp` already recommended it for mini.snippets, but it did not exist.
+- `UPSTREAM.md` records which upstream commits have been reviewed.
+
+### Changed
+
+- Faster filtering and menu rendering, from upstream: sources are filtered once per `view.open`, entry caches are created lazily, and character checks use lookup tables. Not benchmarked in this fork.
+- The README and `:h cmp` install examples and the rockspec now point at this fork, and the README lists what the fork adds.
+
+### Fixed
+
+- `:CmpQuery` popup: `<CR>` and `<Tab>` now act on the row under the cursor, and the cursor starts on the first source. They did nothing on source rows before.
+- LSP positions no longer use the deprecated `vim.str_byteindex` signature. Positions past the end of a line now clamp to its length.
+
 ## [0.1.9] - 2026-11-06
 
 ### Fixed
