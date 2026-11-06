@@ -65,6 +65,15 @@ view.open = function(self, ctx, sources)
     return a ~= b and (a < b) or nil
   end)
 
+  -- get_entries runs the matcher over every entry: call it once per source.
+  local source_entries = {}
+  local get_entries = function(s)
+    if not source_entries[s] then
+      source_entries[s] = s:get_entries(ctx)
+    end
+    return source_entries[s]
+  end
+
   local entries = {}
   for _, group_index in ipairs(group_indexes) do
     local source_group = source_group_map[group_index] or {}
@@ -72,7 +81,7 @@ view.open = function(self, ctx, sources)
     -- check the source triggered by character
     local has_triggered_by_symbol_source = false
     for _, s in ipairs(source_group) do
-      if #s:get_entries(ctx) > 0 then
+      if #get_entries(s) > 0 then
         if s.is_triggered_by_symbol then
           has_triggered_by_symbol_source = true
           break
@@ -97,7 +106,7 @@ view.open = function(self, ctx, sources)
           -- source order priority bonus.
           local priority = s:get_source_config().priority or ((#source_group - (i - 1)) * config.get().sorting.priority_weight)
 
-          local es = s:get_entries(ctx)
+          local es = get_entries(s)
           for index, e in ipairs(es) do
             e.score = (e.score + priority) * max_view_entries + #es - index
             table.insert(group_entries, e)
