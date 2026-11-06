@@ -8,11 +8,7 @@ local function format_summary(report)
   local quoted_query = ('%q'):format(report.query)
   local lines = {
     ('Query: %s   context=%s   sources=%d'):format(quoted_query, label, #report.results),
-    ('Total: %d items in %.1fms%s'):format(
-      report.total_count,
-      report.total_time_ms,
-      report.timed_out and (' (timed out, %d source(s) still pending)'):format(report.pending) or ''
-    ),
+    ('Total: %d items in %.1fms%s'):format(report.total_count, report.total_time_ms, report.timed_out and (' (timed out, %d source(s) still pending)'):format(report.pending) or ''),
     '',
   }
   return lines
@@ -46,36 +42,30 @@ end
 local function render(state)
   local lines = format_summary(state.report)
   local line_map = {}
-  for _ = 1, #lines do
-    table.insert(line_map, nil)
+  local add = function(line, entry)
+    table.insert(lines, line)
+    line_map[#lines] = entry
   end
 
   -- Column header above the source rows.
-  table.insert(lines, ('  %-32s  %-12s  %5s        %8s  %s'):format('source group', 'status', 'count', 'time', 'trigger'))
-  table.insert(line_map, nil)
-  table.insert(lines, string.rep('-', 92))
-  table.insert(line_map, nil)
+  add(('  %-32s  %-12s  %5s        %8s  %s'):format('source group', 'status', 'count', 'time', 'trigger'))
+  add(string.rep('-', 92))
 
   for i, r in ipairs(state.report.results) do
-    table.insert(lines, format_source_line(r))
-    table.insert(line_map, { kind = 'source', source_index = i })
+    add(format_source_line(r), { kind = 'source', source_index = i })
     if r.expanded then
       if #r.items == 0 then
-        table.insert(lines, '    (no items)')
-        table.insert(line_map, nil)
+        add('    (no items)')
       else
         for j, item in ipairs(r.items) do
-          table.insert(lines, format_item_line(item, j))
-          table.insert(line_map, { kind = 'item', source_index = i, item_index = j })
+          add(format_item_line(item, j), { kind = 'item', source_index = i, item_index = j })
         end
       end
     end
   end
 
-  table.insert(lines, '')
-  table.insert(line_map, nil)
-  table.insert(lines, '<CR> toggle expansion · q / <Esc> close')
-  table.insert(line_map, nil)
+  add('')
+  add('<CR> toggle expansion · q / <Esc> close')
 
   vim.api.nvim_set_option_value('modifiable', true, { buf = state.buf })
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
@@ -141,18 +131,25 @@ function query_view.open(report)
   local function map(lhs, rhs)
     vim.keymap.set('n', lhs, rhs, { buffer = buf, nowait = true, silent = true })
   end
-  map('<CR>', function() toggle_at_cursor(state) end)
-  map('<Tab>', function() toggle_at_cursor(state) end)
-  map('q', function() close(state) end)
-  map('<Esc>', function() close(state) end)
+  map('<CR>', function()
+    toggle_at_cursor(state)
+  end)
+  map('<Tab>', function()
+    toggle_at_cursor(state)
+  end)
+  map('q', function()
+    close(state)
+  end)
+  map('<Esc>', function()
+    close(state)
+  end)
 
   -- Park the cursor on the first source line so <CR> works immediately.
-  if state.line_map then
-    for i, entry in ipairs(state.line_map) do
-      if entry and entry.kind == 'source' then
-        pcall(vim.api.nvim_win_set_cursor, win, { i, 0 })
-        break
-      end
+  for i = 1, vim.api.nvim_buf_line_count(buf) do
+    local entry = state.line_map[i]
+    if entry and entry.kind == 'source' then
+      pcall(vim.api.nvim_win_set_cursor, win, { i, 0 })
+      break
     end
   end
 end
