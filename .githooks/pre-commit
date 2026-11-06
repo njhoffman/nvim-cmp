@@ -1,9 +1,5 @@
 #!/bin/sh
+set -e
 
-DIR="$(dirname $(dirname $( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )))"
-
-cd $DIR
+cd "$(git rev-parse --show-toplevel)"
 make pre-commit
-for FILE in `git diff --staged --name-only`; do
-    git add $FILE
-done
