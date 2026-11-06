@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+## [0.1.9] - 2026-11-06
+
+### Fixed
+
+- Completion menu: the `icon` column is now measured, so icons no longer run into the next column, and fields not listed in `formatting.fields` no longer widen the window.
+- Calling `cmp.setup()` more than once no longer stacks duplicate autocmds and event handlers, and calling only `cmp.setup.cmdline`, `.filetype`, `.buffer` or `.global` now activates completion.
+- A source responding with `vim.NIL`, or with `items = vim.NIL`, no longer stays stuck fetching.
+- `performance.trigger_debounce` now follows later `cmp.setup()` calls and filetype or buffer configs. It is also documented now.
+- `:CmpQuery` and `cmp.query` no longer leave query results in live sources, which could serve stale items to real completion and skip the source request. They also no longer clear the entries of an open menu.
+- `.githooks/pre-commit` now runs under `sh`, blocks the commit when lint or tests fail, and no longer stages unstaged changes. `init.sh` now enables it through `core.hooksPath`.
+
 ## [0.1.8](https://github.com/njhoffman/nvim-cmp/compare/v0.1.7...v0.1.8) (2026-04-26)
 
 ### Features
