@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-06
+
+### Added
+
+- `:CmpQuery` accepts `cmdline:/` and `filetype:lua` to choose a cmdtype or filetype.
+
+### Changed
+
+- **Breaking:** a text change that removes lines no longer triggers completion, so deleting the next line in insert mode does not open the menu at the end of the previous line.
+- `cmp.query` no longer blocks the editor while sources respond. Its callback now always runs later, so code that read the report right after the call must use the callback.
+- `:CmpQuery main` now uses the active config, including buffer and filetype sources, matching `:CmpStatus main`.
+- Faster handling of large completion lists: `vim.NIL` is cleared in place rather than by copying each item.
+
+### Fixed
+
+- `CompletionItem.data` is no longer altered, so it reaches the server unchanged on `completionItem/resolve`.
+- The completion menu stays inside the editor when it is too wide, also from the left half of the screen and with `col_offset`.
+- The menu no longer flips above the cursor into less space, which could hide it or shrink it to one row. It now uses whichever side has more room.
+
 ## [0.3.0] - 2026-11-06
 
 ### Changed

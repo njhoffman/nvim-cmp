@@ -8,8 +8,23 @@ Last reviewed upstream commit: `fe29aba` (2026-11-05). To see what is new: `git 
 
 | Upstream | Change | Why not |
 | --- | --- | --- |
-| `2ffe79f` | TextChanged only updates on added text | Drops pastes and multibyte input (open follow-up PR #2228); the fork has `trigger_debounce` instead |
+| `2ffe79f` | TextChanged only updates on added text | Drops pastes and multibyte input. Its follow-up PR #2228 is a large unrelated bundle. The fork fixes the reported case (#1303) by skipping changes that remove lines |
 | `cd2cf0c`, `2fb2a3c`, `a70bdcf` | README and doc edits | Do not apply cleanly; not reviewed line by line |
+
+## Open upstream PRs
+
+Reviewed at `fe29aba`. These are unmerged upstream, so check them again when they land.
+
+| PR | Change | Status here |
+| --- | --- | --- |
+| #2230 | `PreselectMode` type | Applied |
+| #2234 | Keep the menu inside the editor | Applied |
+| #2243, #2244 | In-place `ensure_nil`, keep `data` unchanged | Applied |
+| #2177 | Schedule instead of feedkeys | Already present |
+| #2032 | Docs height for wrapped lines | Already present |
+| #2165 | Drop the `UIEnter` subscription | Not applied: the report is not reproduced here, and it changes when highlights are set |
+| #2231 | Expand abbreviations in fallbacks | Not applied: about 170 lines for a narrow case |
+| #2235 | Anchor windows for GUIs | Not applied: wide change, only affects GUIs with panels |
 
 ## Superseded in the fork
 
