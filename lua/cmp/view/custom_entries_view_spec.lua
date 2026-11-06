@@ -96,6 +96,25 @@ describe('custom_entries_view', function()
       assert.is_false(view.bottom_up)
     end)
 
+    it('stays below when top_padding leaves no room above', function()
+      vim.o.lines = 10
+      vim.cmd('silent! only')
+      config.set_global({
+        view = { entries = { name = 'custom', vertical_positioning = 'below' } },
+        window = { completion = { top_padding = 5, max_height = 10, border = 'none' } },
+      })
+      local state = spec.state('a', 1, 2)
+      local entries = {}
+      for i = 1, 8 do
+        entries[i] = entry.new(state.manual(), state.source(), { label = 'alpha' .. i })
+      end
+      view:open(1, entries)
+      assert.is_false(view.bottom_up)
+      local win = vim.api.nvim_win_get_config(view.entries_win.win)
+      assert.is.truthy(win.height >= 1)
+      assert.is.truthy(win.row + win.height <= vim.o.lines)
+    end)
+
     it('top_padding moves the menu further below the cursor', function()
       local base = open_at(20, 'below', 0)
       view:close()
@@ -114,6 +133,40 @@ describe('custom_entries_view', function()
     local item = { label = 'alpha', insertTextFormat = 2, insertText = 'alpha($1)' }
     config.set_global({ formatting = { expandable_indicator = true } })
     assert.are.equal('alpha~', entry.new(state.manual(), state.source(), item):get_view(1, view.entries_win:get_buffer()).abbr.text)
+  end)
+
+  describe('horizontal fit', function()
+    local columns = vim.o.columns
+
+    after_each(function()
+      vim.o.columns = columns
+    end)
+
+    local open_wide = function(indent, label_width, col_offset)
+      config.set_global({ window = { completion = { col_offset = col_offset or 0, border = 'none' } } })
+      local state = spec.state(string.rep(' ', indent) .. 'a', 1, indent + 2)
+      view:open(indent + 1, { entry.new(state.manual(), state.source(), { label = string.rep('a', label_width) }) })
+      local win = vim.api.nvim_win_get_config(view.entries_win.win)
+      return win.col, win.width
+    end
+
+    it('keeps a wide menu opened from the left half inside the editor', function()
+      vim.o.columns = 80
+      local col, width = open_wide(20, 65)
+      assert.is.truthy(col + width <= vim.o.columns)
+    end)
+
+    it('clamps a menu wider than the editor', function()
+      vim.o.columns = 40
+      local col, width = open_wide(0, 60)
+      assert.is.truthy(col + width <= vim.o.columns)
+    end)
+
+    it('includes col_offset when checking the fit', function()
+      vim.o.columns = 80
+      local col, width = open_wide(0, 72, 10)
+      assert.is.truthy(col + width <= vim.o.columns)
+    end)
   end)
 
   it('measures the icon column', function()

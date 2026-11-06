@@ -195,10 +195,12 @@ custom_entries_view.open = function(self, offset, entries)
   local top_padding = math.max(0, completion.top_padding or 0)
   local prefers_above = c.view.entries.vertical_positioning == 'above'
   local prefers_auto = c.view.entries.vertical_positioning == 'auto'
-  local cant_fit_at_bottom = vim.o.lines - row - border_offset_row - top_padding <= math.min(DEFAULT_HEIGHT, height)
-  local cant_fit_at_top = row - border_offset_row - top_padding <= math.min(DEFAULT_HEIGHT, height)
+  local space_below = vim.o.lines - row - border_offset_row - top_padding
+  local space_above = row - border_offset_row - top_padding
+  local cant_fit_at_bottom = space_below <= math.min(DEFAULT_HEIGHT, height)
+  local cant_fit_at_top = space_above <= math.min(DEFAULT_HEIGHT, height)
   local is_in_top_half = math.floor(vim.o.lines * 0.5) > row + border_offset_row
-  local should_position_above = cant_fit_at_bottom or (prefers_above and not cant_fit_at_top) or (prefers_auto and is_in_top_half and not cant_fit_at_top)
+  local should_position_above = (cant_fit_at_bottom and space_above > space_below) or (prefers_above and not cant_fit_at_top) or (prefers_auto and is_in_top_half and not cant_fit_at_top)
   if should_position_above then
     self.bottom_up = true
     height = math.min(height, row - 1 - top_padding)
@@ -209,8 +211,13 @@ custom_entries_view.open = function(self, offset, entries)
   else
     self.bottom_up = false
     row = row + top_padding
+    if cant_fit_at_bottom then
+      height = math.min(height, space_below)
+    end
   end
-  if math.floor(vim.o.columns * 0.5) <= col + border_offset_col and vim.o.columns - col - border_offset_col <= width then
+  -- Check the fit at the column the menu is opened at, col_offset included.
+  col = col + completion.col_offset
+  if vim.o.columns - col - border_offset_col <= width then
     width = math.min(width, vim.o.columns - 1)
     col = vim.o.columns - width - border_offset_col - 1
     if col < 0 then
@@ -236,7 +243,7 @@ custom_entries_view.open = function(self, offset, entries)
     relative = 'editor',
     style = 'minimal',
     row = math.max(0, row),
-    col = math.max(0, col + completion.col_offset),
+    col = math.max(0, col),
     width = width,
     height = height,
     border = completion.border,
