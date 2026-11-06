@@ -2,6 +2,10 @@
 lint:
 	luacheck ./lua
 
+.PHONY: format-check
+format-check:
+	stylua --check lua
+
 .PHONY: test
 test:
 	vusted --output=gtest ./lua

@@ -11,15 +11,19 @@ on:
 jobs:
   integration:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        neovim: [v0.11.0, stable, nightly]
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Setup neovim
       uses: rhysd/action-setup-vim@v1
       with:
-        version: nightly
+        version: ${{ matrix.neovim }}
         neovim: true
 
     - name: Setup lua
@@ -39,3 +43,16 @@ jobs:
     - name: Run tests
       shell: bash
       run: make integration
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Check formatting
+      uses: JohnnyMorganz/stylua-action@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        version: v2.6.0
+        args: --check ./lua
